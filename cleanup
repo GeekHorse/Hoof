@@ -1,0 +1,17 @@
+#!/bin/bash
+
+rm -f ./source/*.o
+rm -f ./source/*.a
+rm -f ./exampleClient/*.o
+rm -f hoof
+rm -f ./tests/misc/testMisc.o
+rm -f ./tests/misc/testMisc
+rm -f ./source/*.gcno
+rm -f ./source/*.gcda
+rm -f ./*.gcov
+rm -rf lcov
+rm -f outa
+rm -f outb
+rm -f outread
+rm -f bad
+

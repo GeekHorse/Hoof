@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+
+./cleanup
+
+(cd ./source && gcc -O3 -c *.c)
+(cd ./source && ar rcs libHoof.a *.o)
+
+(cd ./exampleClient && gcc -O3 -I ../source/ -c exampleClient.c -o exampleClient.o)
+(cd ./exampleClient && gcc -O3 exampleClient.o ../source/libHoof.a -o ../hoof)
+
+strip -s ./hoof
+
+stat -c '%s %n' ./hoof
+

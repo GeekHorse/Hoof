@@ -1,0 +1,39 @@
+hoof is a library to manage hierarchical data with an interface designed for speech
+hoof also comes with an example terminal program that has a text interface
+
+primary purpose is to allow someone who is blind to easily create manipulate and navigate hierarchical data
+a speech interface limits the need for upper case letters or punctuation or symbols
+hoof organizes data as a hierarchy of values
+values contain words and each value can have a list of children values
+to learn how to use hoof see the manual
+
+current version is 0 9 0
+author is jeremiah martell
+copyright is 2014 through 2015
+license is 3 clause bsd
+website is geekhorse dot com
+size of the library is less than 20 kilobytes
+
+hoof is a high quality library
+compiles without warnings against c 89 c 99 and c 11 standards
+checks and handles all error conditions
+if malloc fails will not crash or corrupt memory or corrupt state but will safely return an out of memory return code
+valgrind reports no memory leaks or errors
+test coverage is 100 percent branch coverage
+all code is documented
+all functions are reentrant
+contains no third party code
+written entirely by jeremiah
+
+to build just run the script named build
+hoof has no dependencies other than standard c libraries
+the only standard c functions hoof requres are malloc calloc free strcmp fopen fread fwrite fclose rename and remove
+to build manually just compile the c files in the source directory and create a static library
+	cd source
+	gcc -c *.c
+	ar rcs libHoof.a *.o
+
+if you want to change the functions that hoof calls for malloc calloc and free then define HOOF_USE_MEM_HOOKS and provide hoofHookMalloc hoofHookCalloc and hoofHookFree
+if you want errors logged then define HOOF_ENABLE_LOGGING and provide hoofHookLog
+if you want to modify hoof then define HOOF_BE_PARANOID to turn on extra paranoid checks in the library
+

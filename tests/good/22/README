@@ -1,0 +1,53 @@
+dig
+
+dig cancel
+	ok
+		1 cannot fail ... digs current value
+dig done
+	ok
+		2 current value is empty
+		3 further down value is empty
+	edge
+		4 no empty values
+dig word cancel
+	ok
+		5 current value
+		6 further down value
+	edge
+		7 no value started with word
+dig word done
+	ok
+		8 current value
+		9 further down value
+	edge
+		10 a value matched word1 but had extra words
+		11 no value matched word1
+dig word word cancel
+	ok
+		12 current value
+		further down value
+			13 current value matched word1 further value matched both
+			14 further value matched word1 further value matched both
+			15 further value matched word1 and word2
+	edge
+		16 a value matched word1 but not word2
+		17 no value matched word1
+dig word word done
+	ok
+		18 current value
+		further down value
+			19 current value matched word1 further value matched both
+			20 further value matched word1 further value matched both
+			21 further value matched word1 and word2
+	edge
+		22 value matched word1 but not word2
+		23 value matched word1 and word2 but had extra words
+		24 no value matched word1
+
+30 dig in ok
+31 dig in cancel
+
+50 test diging literal words
+51 test empty words during dig
+
+99 almost every case in 1 file

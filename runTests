@@ -1,0 +1,410 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+	echo "Usage   runTests (fast|paranoid|coverage|valgrind)"
+	exit -1
+fi
+
+if [ $1 != "fast" ] && [ $1 != "valgrind" ] && [ $1 != "paranoid" ] && [ $1 != "coverage" ]; then
+	echo "Usage   runTests (fast|paranoid|coverage|valgrind)"
+	exit -1
+fi
+
+#check standards
+echo "Testing c89 c99 c11 standards"
+
+echo "c89"
+./cleanup
+
+(cd ./source && gcc -std=c89 -pedantic -Wall -Werror -Wextra -c *.c)
+if [ $? -ne 0 ]; then
+	echo "FAILED"
+	exit -1
+fi
+
+echo "c99"
+./cleanup
+
+(cd ./source && gcc -std=c99 -pedantic -Wall -Werror -Wextra -c *.c)
+if [ $? -ne 0 ]; then
+	echo "FAILED"
+	exit -1
+fi
+
+echo "c11"
+./cleanup
+
+(cd ./source && gcc -std=c11 -pedantic -Wall -Werror -Wextra -c *.c)
+if [ $? -ne 0 ]; then
+	echo "FAILED"
+	exit -1
+fi
+
+./cleanup
+
+# build
+if [ $1 = "fast" ] || [ $1 = "valgrind" ] || [ $1 = "paranoid" ]; then
+	if [ $1 = "paranoid" ]; then
+		(cd ./source && gcc -O3 -DHOOF_BE_PARANOID -DHOOF_USE_MEM_HOOKS -DHOOF_USE_FILE_HOOKS -c *.c)
+		if [ $? -ne 0 ]; then
+			echo "FAILED TO COMPILE"
+			exit -1
+		fi
+	else
+		(cd ./source && gcc -O3 -DHOOF_USE_MEM_HOOKS -DHOOF_USE_FILE_HOOKS -c *.c)
+		if [ $? -ne 0 ]; then
+			echo "FAILED TO COMPILE"
+			exit -1
+		fi
+	fi
+
+	(cd ./source && ar rcs libHoof.a *.o)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO BUILD libHoof.a"
+		exit -1
+	fi
+
+	(cd ./exampleClient && gcc -O3 -DHOOF_DEBUG -I ../source -c exampleClient.c -o exampleClient.o)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO COMPILE EXAMPLE CLIENT"
+		exit -1
+	fi
+
+	(cd ./exampleClient && gcc -O3 exampleClient.o ../source/libHoof.a -o ../hoof)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO LINK EXAMPLE CLIENT"
+		exit -1
+	fi
+
+	(cd ./tests/misc && gcc -O3 -DHOOF_DEBUG -I ../../source -c testMisc.c -o testMisc.o)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO COMPILE testMisc"
+		exit -1
+	fi
+
+	(cd ./tests/misc && gcc -O3 testMisc.o ../../source/libHoof.a -o testMisc)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO LINK testMisc"
+		exit -1
+	fi
+elif [ $1 = "coverage" ]; then
+	(cd ./source && gcc -fprofile-arcs -ftest-coverage -g -DHOOF_USE_MEM_HOOKS -DHOOF_USE_FILE_HOOKS -c *.c)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO COMPILE"
+		exit -1
+	fi
+
+	(cd ./source && ar rcs libHoof.a *.o)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO BUILD libHoof.a"
+		exit -1
+	fi
+
+	(cd ./exampleClient && gcc -g -DHOOF_DEBUG -I ../source -c exampleClient.c -o exampleClient.o)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO COMPILE EXAMPLE CLIENT"
+		exit -1
+	fi
+
+	(cd ./exampleClient && gcc -fprofile-arcs exampleClient.o ../source/libHoof.a -o ../hoof)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO LINK EXAMPLE CLIENT"
+		exit -1
+	fi
+
+	(cd ./tests/misc && gcc -g -DHOOF_DEBUG -I ../../source -c testMisc.c -o testMisc.o)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO COMPILE testMisc"
+		exit -1
+	fi
+
+	(cd ./tests/misc && gcc -fprofile-arcs testMisc.o ../../source/libHoof.a -o testMisc)
+	if [ $? -ne 0 ]; then
+		echo "FAILED TO LINK testMisc"
+		exit -1
+	fi
+fi
+
+# run tests
+echo "Testing bad filenames"
+if [ $1 = "valgrind" ]; then
+	valgrind -q --leak-check=full ./hoof a1
+else
+	./hoof a1
+fi
+if [ $? -eq 3002 ]; then
+	echo "FAILED a1"
+	exit -1
+fi
+
+if [ $1 = "valgrind" ]; then
+	valgrind -q --leak-check=full ./hoof a1
+else
+	./hoof a~
+fi
+if [ $? -eq 3002 ]; then
+	echo "FAILED a~"
+	exit -1
+fi
+
+if [ $1 = "valgrind" ]; then
+	valgrind -q --leak-check=full ./hoof xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+else
+	./hoof xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+fi
+if [ $? -eq 3003 ]; then
+	echo "FAILED LONG FILE NAME"
+	exit -1
+fi
+
+echo "Testing good cases"
+
+for f1 in ./tests/good/*
+do
+	echo $f1
+
+	for f2 in $f1/*.in
+	do
+		echo $f2
+
+		if [ "$1" = "fast" ]; then
+			rm -f outread
+			rm -f outa
+
+			if [ -e $f2.load ]; then
+				cp $f2.load outa
+			else
+				touch outa
+			fi
+
+			cat $f2 | ./hoof outa $counter > outread 2>/dev/null
+
+			result=$?
+
+			# 99 is 'quit'
+			if [ $result -ne 0 ] && [ $result -ne 99 ]; then
+				echo "FAILED   TEST RETURNED ERROR   $result"
+				exit -1
+			fi
+
+			if [ -e ".outa" ]; then
+				echo "FAILED   THE TEMPORARY FILE STILL EXISTS"
+				exit -1
+			fi
+		else
+			# we test all memory allocation and file operation failures here
+			counter=0
+			while true; do
+				let counter=counter+1
+
+				rm -f outread
+				rm -f outa
+
+				if [ -e $f2.load ]; then
+					cp $f2.load outa
+				else
+					touch outa
+				fi
+
+				if [ "$1" = "valgrind" ]; then
+					cat $f2 | valgrind -q --leak-check=full ./hoof outa $counter > outread 2>/dev/null
+				else
+					cat $f2 | ./hoof outa $counter > outread 2>/dev/null
+				fi
+
+				result=$?
+
+				# 2 is out of memory   3 is file error
+				if [ $result -eq 2 ] || [ $result -eq 3 ]; then
+					if [ -e ".outa" ]; then
+						echo "FAILED   THE TEMPORARY FILE STILL EXISTS"
+						exit -1
+					fi
+
+					continue
+				fi
+				# 0 is success   99 is 'quit'
+				if [ $result -eq 0 ] || [ $result -eq 99 ]; then
+					if [ -e ".outa" ]; then
+						echo "FAILED   THE TEMPORARY FILE STILL EXISTS"
+						exit -1
+					fi
+
+					break
+				fi
+
+				echo "FAILED   THE TEST RETURNED ERROR   $result"
+				exit -1
+			done
+		fi
+
+		diff outa $f2.out
+		if [ $? -ne 0 ]; then
+			echo "FAILED   OUTPUT FILE DID NOT MATCH EXPECTED OUTPUT FILE"
+			exit -1
+		fi
+
+		if [ -e $f2.read ]; then
+			diff outread $f2.read
+			if [ $? -ne 0 ]; then
+				echo "FAILED   OUTPUT WORDS DID NOT MATCH EXPECTED OUTPUT WORDS"
+				exit -1
+			fi
+		fi
+
+		if [ "$1" = "fast" ]; then
+			rm -f outb
+			cp outa outb
+
+			echo "save" | ./hoof outb $counter >/dev/null 2>/dev/null
+
+			result=$?
+
+			if [ $result -ne 0 ]; then
+				echo "FAILED   LOAD THEN SAVE RETURNED ERROR   $result"
+				exit -1
+			fi
+
+			if [ -e ".outb" ]; then
+				echo "FAILED   THE TEMPORARY FILE STILL EXISTS"
+				exit -1
+			fi
+		else
+			counter=0
+			while true; do
+				let counter=counter+1
+
+				rm -f outb
+				cp outa outb
+				if [ "$1" = "valgrind" ]; then
+					echo "save" | valgrind -q --leak-check=full ./hoof outb $counter >/dev/null 2>/dev/null
+				else
+					echo "save" | ./hoof outb $counter >/dev/null 2>/dev/null
+				fi
+
+				result=$?
+
+				# 2 is out of memory   3 is file error
+				if [ $result -eq 2 ] || [ $result -eq 3 ]; then
+					if [ -e ".outb" ]; then
+						echo "FAILED   THE TEMPORARY FILE STILL EXISTS"
+						exit -1
+					fi
+
+					continue
+				fi
+				# 0 is success
+				if [ $result -eq 0 ]; then
+					if [ -e ".outb" ]; then
+						echo "FAILED   THE TEMPORARY FILE STILL EXISTS"
+						exit -1
+					fi
+
+					break
+				fi
+
+				echo "FAILED   THE TEST RETURNED ERROR   $result"
+				exit -1
+			done
+		fi
+
+		diff outa outb
+		if [ $? -ne 0 ]; then
+			echo "FAILED   THE SECOND OUTPUT FILE DID NOT MATCH THE FIRST OUTPUT FILE"
+			exit -1
+		fi
+	done
+done
+
+rm -f outa
+rm -f outb
+rm -f outread
+
+
+echo "Testing bad cases"
+
+for f1 in ./tests/bad/*
+do
+	echo $f1
+
+	for f2 in $f1/*.in
+	do
+		echo $f2
+
+		counter=0
+		while true; do
+			let counter=counter+1
+
+			rm -f bad
+			cp $f2 bad
+
+			if [ "$1" = "valgrind" ]; then
+				echo "save" | valgrind -q --leak-check=full ./hoof bad >/dev/null 2>/dev/null
+			else
+				echo "save" | ./hoof bad >/dev/null 2>/dev/null
+			fi
+
+			result=$?
+
+			# 2 is out of memory   3 is file error
+			if [ $result -eq 2 ] || [ $result -eq 3 ]; then
+				if [ -e ".bad" ]; then
+					echo "FAILED   THE TEMPORARY FILE STILL EXISTS"
+					exit -1
+				fi
+
+				continue
+			fi
+			# 0 is success
+			if [ $result -eq 0 ]; then
+				echo "FAILED   THE BAD TEST CASE SUCCEEDED"
+				exit -1
+			fi
+
+			break
+		done
+	done
+done
+
+rm -f bad
+
+# test read in file we load
+cp ./tests/badFileWithRead ./bad
+if [ "$1" = "valgrind" ]; then
+	echo "save" | valgrind -q --leak-check=full ./hoof bad >/dev/null 2>/dev/null
+else
+	echo "save" | ./hoof bad >/dev/null 2>/dev/null
+fi
+if [ $? -eq 0 ]; then
+	echo "FAILED   BAD FILE WITH READ SUCCEEDED BUT SHOULD HAVE FAILED"
+	exit -1
+fi
+
+rm -f bad
+
+
+echo "Testing misc cases"
+if [ "$1" = "valgrind" ]; then
+	(cd ./tests/misc && valgrind -q --leak-check=full ./testMisc >/dev/null 2>/dev/null)
+else
+	(cd ./tests/misc && ./testMisc >/dev/null 2>/dev/null)
+fi
+if [ $? -ne 0 ]; then
+	echo "FAILED   MISC TESTS FAILED"
+	exit -1
+fi
+
+echo "SUCCESS"
+
+
+# generate test coverage
+if [ $1 = "fast" ] || [ "$1" = "valgrind" ] || [ "$1" = "paranoid" ]; then
+	echo "no coverage results for $1"
+else
+	gcov -o ./source ./source/*.c
+	mkdir lcov
+	lcov --directory . --capture --output-file ./lcov/hoof.info
+	genhtml ./lcov/hoof.info -o ./lcov
+fi
+
+

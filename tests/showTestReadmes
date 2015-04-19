@@ -1,0 +1,18 @@
+#!/bin/bash
+
+for f1 in ./good/*
+do
+	echo ""
+	echo $f1
+	cat $f1/README
+done
+echo ""
+
+for f1 in ./bad/*
+do
+	echo ""
+	echo $f1
+	cat $f1/README
+done
+echo ""
+

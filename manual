@@ -1,0 +1,251 @@
+hoof stores data in a hierarchy
+you have a list of values and each value can have a sublist of values and so on
+a value is a list of words
+a word can be a normal word that contains only letters or a number
+	note that numbers are not yet implemented
+
+to start a new hoof file you must manually create an empty file
+	> touch myfile
+then tell hoof to open it
+	> hoof myfile
+	hello
+hoof starts by saying hello
+this new file only has 1 value and it contains no words
+to see what the value is just say value
+note that hoofs interface is soley done by words
+you never have to press enter just type the words separated by spaces
+	value
+	empty
+hoof says this value is empty
+lets add new words to this value
+	new right 
+	new 
+	this is the first value done 
+	ok
+and verify the value now has our new words
+	value
+	ok   this is the first value
+note that when youre adding new words you let hoof know youre done by saying done
+note that you add new words to the hierarchy by saying new and then a direction
+up is the previous value
+down is the next value
+left is the previous word
+right is the next word
+in is the sublist
+out is the parent value
+before we said new right which means we wanted to start adding words to the right of the current word in the current value
+now lets add two new values
+	new down 
+	new 
+	this is the second value done 
+	ok 
+	new down 
+	new 
+	this is the third value done 
+	ok
+now we have three values and we are currently at the third value
+lets go up twice to the first value then read each of the values
+	up 
+	ok 
+	up 
+	ok 
+	value 
+	ok   this is the first value 
+	down 
+	ok 
+	value 
+	ok   this is the second value 
+	down 
+	ok 
+	value 
+	ok   this is the third value
+note that you navigate the data by simply saying the direction you want to go
+you can also prefix the direction by most to go as far as you can in that direction
+for example we are currently at the third value
+if we wanted to go to the first value we could say most up
+	most up 
+	ok 
+	value 
+	ok   this is the first value
+you can see what current word you are at by saying word
+and you can navigate between words by saying left and right
+	word 
+	ok   this 
+	right 
+	ok 
+	word 
+	ok   is 
+	most right 
+	ok 
+	word 
+	ok   value 
+	most left 
+	ok 
+	word 
+	ok   this
+you can insert new words in the value by saying new left or new right
+	new left 
+	new 
+	beginning of value done 
+	ok 
+	value 
+	ok   beginning of value this is the first value
+you can delete the current word by saying delete word
+	word 
+	ok   value 
+	delete word 
+	ok 
+	value 
+	ok   beginning of this is the first value 
+	word 
+	ok   this
+you can delete the current value by saying delete value
+	delete value 
+	ok 
+	value 
+	ok   this is the second value
+note that when you delete a value all its subvalues are also deleted
+note that there is currently no way to undelete
+you can save your work at anytime by saying save
+	save 
+	ok 	
+lets create some children values of our current value
+	new in 
+	new 
+	this is a sub value done 
+	ok 
+	new down 
+	new 
+	this is another sub value done 
+	ok 
+	value 
+	ok   this is another sub value
+you can go out to go back to our parent and in to go back to the subvalue
+	out 
+	ok 
+	value 
+	ok   this is the second value 
+	in 
+	ok 
+	value 
+	ok   this is a sub value
+you can move values and words by saying move and the direction to move
+note that currently values and words can only be moved one spot at a time
+in the future this will improve
+lets move a word
+	word 
+	ok   this 
+	move right 
+	ok 
+	word 
+	ok   this 
+	value 
+	ok   is this a sub value
+lets move a value
+	value 
+	ok   is this a sub value 
+	down 
+	ok 
+	value 
+	ok   this is another sub value 
+	move up 
+	ok 
+	value 
+	ok   this is another sub value 
+	up 
+	edge 
+	down 
+	ok 
+	value 
+	ok   is this a sub value
+you can clear all words from a value by saying clear
+	value 
+	ok   is this a sub value 
+	clear 
+	ok 
+	value 
+	empty
+note that once you say a word it cannot be unsaid
+with the text based terminal example client you can only backspace and modify the current word youre saying
+with commands that take multiple words you can cancel the command by saying cancel
+lets cancel a delete
+	delete cancel 
+	cancel 
+	value 
+	empty
+cancel works everywhere and never does harm
+you can always go back to the most out most up first value in the hierarchy by saying root
+	root 
+	ok 
+	value 
+	ok   this is the second value
+we deleted the first value before so this is our root value now
+you can quit by saying quit
+	quit 
+	goodbye
+	> 
+note that when you quit a save always happens so you will never lose your changes
+lets open our file again
+	> hoof myfile
+	hello 
+	value 
+	ok   this is the second value 
+	quit 
+	goodbye
+	>
+the command dig lets you quickly search and navigate the hierarchy
+lets say we had a hoof file that we used as an address book
+the root values were names of people
+their subvalues were attributes like phone or address
+their subvalues were the actual phone numbers or addresses
+here is a small example
+	john doe
+		address
+			101 main st
+		phone
+			555 4567
+	mary smith
+		address
+			56 hill rd
+		phone
+			555 1234
+note that numbers are not implemented yet
+if we had many names in our address book it would be tedious to find a name by reading each value individually
+we could find mary smith with the dig command like so
+	> hoof addressbook
+	hello
+	dig mary smith done
+	ok
+	value
+	mary smith
+dig finds an exact match when you end it with done
+you can misuse the cancel command during dig to make it do a begins-with search
+dig mary cancel   would find the first value that began with the word mary
+dig begins its search at the current value
+dig can also help you navigate inward
+to dig for mary smith and then dig for phone
+	root
+	ok
+	dig mary smith in phone done
+	ok
+	value
+	phone
+if you say in while digging it is equivalent to saying done then in then starting a new dig
+
+note that when youre inserting new words you say done to let hoof know youre done inserting
+if you want to insert the word done you can prefix it with the word literal
+that means if you want to insert the word literal you must prefix it with the word literal
+	new down 
+	new 
+	to insert the word literal done you must prefix it by literal literal done 
+	ok 
+	value 
+	ok   to insert the word done you must prefix it by literal
+
+
+note that the hoof file format is stable
+any files you create now will be editable with all future versions of hoof
+however the command words and hoofs responses may change
+
+thats it for now
+more commands are coming in the future
