@@ -1,28 +1,5 @@
 change from camelCase to underscores for names?
 
-make short versions of commands? and use these in our save file format?
-d for down
-i for in
-l for left
-m for most ... or mu md ml mr mi mo ?
-n for new ... or nu nd nl nr ni no ?
-o for out
-r for right
-u for up
-l for line (v for value?)
-w for word
-
-s for save
-r for root
-d for delete (x for delete?)
-d for dig (just dig for dig?)
-c for cancel
-c for clear
-l for literal ???
-z for done
-q for quit
-m for move
-
 undo, probably just undelete
 
 index and total counts for down, right, and depth
@@ -30,12 +7,6 @@ insert number state
 add spell word state
 fine line that contains X
 move most
-
-change good characters to just a-z0-9
-or rather it can be a word
-	a-z
-or a number
-	-0-9.0-9
 
 read page
 
@@ -59,4 +30,16 @@ make a hoof_to_c converter
 make a c_to_hoof converter
 
 create file manual
+
+make short versions of commands? and use these in our save file format?
+d for down
+i for in
+l for left
+m for most ... or mu md ml mr mi mo ?
+n for new ... or nu nd nl nr ni no ?
+o for out
+r for right
+u for up
+l for line (v for value?)
+w for word
 

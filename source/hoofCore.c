@@ -36,6 +36,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hoofInternal.h"
 
 /******************************************************************************/
+#define HOOF_INT_MAX                 9223372036854775807
+#define HOOF_INT_MAX_STRING         "9223372036854775807"
+#define HOOF_INT_MAX_STRING_LENGTH 19
+#define HOOF_INT_MIN_STRING        "-9223372036854775808"
+#define HOOF_INT_MIN_STRING_LENGTH 20
+
+/******************************************************************************/
 /*!
 	\brief Transfer a word to the output word in hoof interface. This is what
 		SAY() uses.
@@ -77,12 +84,100 @@ HOOF_INTERNAL HOOF_RC hoofWordVerify( char *word )
 
 
 	/* CODE */
-	/* make sure word doesn't contain any whitespace,
-	 * is only characters, and is not too long */
-	for ( i = 0; word[ i ] != '\0'; i += 1 )
+	/* if normal word that contains letters */
+	if ( word[ 0 ] >= 'a' && word[ 0 ] <= 'z' )
 	{
-		ERR_IF( ! ( word[ i ] >= 'a' && word[ i ] <= 'z' ), HOOF_RC_ERROR_WORD_BAD );
-		ERR_IF( i >= HOOF_MAX_WORD_LENGTH, HOOF_RC_ERROR_WORD_LONG );
+		/* make sure word doesn't contain any whitespace, is only characters, and is not too long */
+		for ( i = 0; word[ i ] != '\0'; i += 1 )
+		{
+			ERR_IF( ! ( word[ i ] >= 'a' && word[ i ] <= 'z' ), HOOF_RC_ERROR_WORD_BAD );
+			ERR_IF( i >= HOOF_MAX_WORD_LENGTH, HOOF_RC_ERROR_WORD_LONG );
+		}
+	}
+	/* if word is a number */
+	else if ( word[ 0 ] == '-' || ( word[ 0 ] >= '0' && word[ 0 ] <= '9' ) )
+	{
+		i = 0;
+
+		/* if it starts with zero then it must be zero */
+		ERR_IF( word[ 0 ] == '0' && word[ 1 ] != '\0', HOOF_RC_ERROR_WORD_BAD );
+
+		/* optional negative sign at beginning */
+		if ( word[ i ] == '-' )
+		{
+			/* next */
+			PARANOID_ERR_IF( i >= HOOF_MAX_WORD_LENGTH );
+			i += 1;
+
+			/* cannot be negative zero */
+			ERR_IF( ! ( word[ i ] >= '1' && word[ i ] <= '9' ), HOOF_RC_ERROR_WORD_BAD );
+		}
+
+		/* verify it only contains numbers */
+		while ( word[ i ] != '\0' )
+		{
+			ERR_IF( ! ( word[ i ] >= '0' && word[ i ] <= '9' ), HOOF_RC_ERROR_WORD_BAD )
+
+			ERR_IF( i >= HOOF_MAX_WORD_LENGTH, HOOF_RC_ERROR_WORD_LONG );
+			i += 1;
+		}
+
+		/* make sure it's not too big for a 64-bit integer */
+
+		/* negative number */
+		if ( word[ 0 ] == '-' )
+		{
+			/* i is now length of the word */
+			ERR_IF( i > HOOF_INT_MIN_STRING_LENGTH, HOOF_RC_ERROR_WORD_BAD );
+
+			if ( i < HOOF_INT_MIN_STRING_LENGTH )
+			{
+				goto cleanup;
+			}
+
+			i = 1; /* skip '-' at beginning of word */
+			while ( word[ i ] != '\0' )
+			{
+				ERR_IF( word[ i ] > HOOF_INT_MIN_STRING[ i ], HOOF_RC_ERROR_WORD_BAD );
+
+				if ( word[ i ] < HOOF_INT_MIN_STRING[ i ] )
+				{
+					break;
+				}
+
+				i += 1;
+			}
+		}
+		/* positive number */
+		else
+		{
+			/* i is now length of the word */
+			ERR_IF( i > HOOF_INT_MAX_STRING_LENGTH, HOOF_RC_ERROR_WORD_BAD );
+
+			if ( i < HOOF_INT_MAX_STRING_LENGTH )
+			{
+				goto cleanup;
+			}
+
+			i = 0;
+			while ( word[ i ] != '\0' )
+			{
+				ERR_IF( word[ i ] > HOOF_INT_MAX_STRING[ i ], HOOF_RC_ERROR_WORD_BAD );
+
+				if ( word[ i ] < HOOF_INT_MAX_STRING[ i ] )
+				{
+					break;
+				}
+
+				i += 1;
+			}
+		}
+	}
+	/* not word or number, must be empty word, which happens when the client
+	   is reading a value and calling hoofDo for each output word */
+	else
+	{
+		ERR_IF( word[ 0 ] != '\0', HOOF_RC_ERROR_WORD_BAD );
 	}
 
 

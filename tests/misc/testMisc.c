@@ -152,10 +152,18 @@ int main( int argc, char **argv )
 	TEST_ERR_IF( rc != HOOF_RC_SUCCESS );
 	TEST_ERR_IF( interface.moreToOutput == 1 );
 
-	/* test bad inputWord */
+	/* test bad inputWord   normal word */
 	for ( i = 0; i < ( HOOF_MAX_WORD_LENGTH + 1 ); i += 1 )
 	{
 		interface.inputWord[ i ] = 'x';
+	}
+	rc = hoofDo( hoof, &interface );
+	TEST_ERR_IF( rc != HOOF_RC_ERROR_WORD_LONG );
+
+	/* test bad inputWord   number */
+	for ( i = 0; i < ( HOOF_MAX_WORD_LENGTH + 1 ); i += 1 )
+	{
+		interface.inputWord[ i ] = '5';
 	}
 	rc = hoofDo( hoof, &interface );
 	TEST_ERR_IF( rc != HOOF_RC_ERROR_WORD_LONG );

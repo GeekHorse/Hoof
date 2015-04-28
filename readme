@@ -7,7 +7,7 @@ hoof organizes data as a hierarchy of values
 values contain words and each value can have a list of children values
 to learn how to use hoof see the manual
 
-current version is 0 9 0
+current version is 0 9 01 wip
 author is jeremiah martell
 copyright is 2014 through 2015
 license is 3 clause bsd

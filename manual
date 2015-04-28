@@ -1,8 +1,7 @@
 hoof stores data in a hierarchy
 you have a list of values and each value can have a sublist of values and so on
 a value is a list of words
-a word can be a normal word that contains only letters or a number
-	note that numbers are not yet implemented
+a word can be a normal word that contains only letters or a number word
 
 to start a new hoof file you must manually create an empty file
 	> touch myfile
@@ -209,7 +208,6 @@ here is a small example
 			56 hill rd
 		phone
 			555 1234
-note that numbers are not implemented yet
 if we had many names in our address book it would be tedious to find a name by reading each value individually
 we could find mary smith with the dig command like so
 	> hoof addressbook
@@ -221,6 +219,7 @@ we could find mary smith with the dig command like so
 dig finds an exact match when you end it with done
 you can misuse the cancel command during dig to make it do a begins-with search
 dig mary cancel   would find the first value that began with the word mary
+note that this misuse of the dig command may not always be supported
 dig begins its search at the current value
 dig can also help you navigate inward
 to dig for mary smith and then dig for phone
