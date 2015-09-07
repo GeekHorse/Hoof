@@ -94,9 +94,8 @@ HOOF_INTERNAL HOOF_RC hoofStateNavigate( Hoof *hoof, HoofInterface *interface, i
 	}
 	else if ( HEAR( "left" ) )
 	{
-		if (    hoof->currentWord->left == NULL
-		     || hoof->currentWord->left->value == NULL
-		   )
+		PARANOID_ERR_IF( hoof->currentWord->left == NULL );
+		if ( hoof->currentWord->left->value == NULL )
 		{
 			SAY( "edge" );
 			goto cleanup;
@@ -107,8 +106,9 @@ HOOF_INTERNAL HOOF_RC hoofStateNavigate( Hoof *hoof, HoofInterface *interface, i
 	}	
 	else if ( HEAR( "right" ) )
 	{
-		PARANOID_ERR_IF( hoof->currentWord->right == NULL );
-		if ( hoof->currentWord->right->value == NULL )
+		if (    hoof->currentWord->right == NULL
+		     || hoof->currentWord->right->value == NULL
+		   )
 		{
 			SAY( "edge" );
 			goto cleanup;
@@ -280,9 +280,7 @@ HOOF_INTERNAL HOOF_RC hoofStateMostChoice( Hoof *hoof, HoofInterface *interface,
 	}
 	else if ( HEAR( "left" ) )
 	{
-		while (    hoof->currentWord->left != NULL
-		        && hoof->currentWord->left->value != NULL
-		      )
+		while ( hoof->currentWord->left->value != NULL )
 		{
 			hoof->currentWord = hoof->currentWord->left;
 		}
@@ -292,7 +290,9 @@ HOOF_INTERNAL HOOF_RC hoofStateMostChoice( Hoof *hoof, HoofInterface *interface,
 	}
 	else if ( HEAR( "right" ) )
 	{
-		while ( hoof->currentWord->right->value != NULL )
+		while (    hoof->currentWord->right != NULL
+		        && hoof->currentWord->right->value != NULL
+		      )
 		{
 			hoof->currentWord = hoof->currentWord->right;
 		}
@@ -466,16 +466,16 @@ HOOF_INTERNAL HOOF_RC hoofStateNewChoice( Hoof *hoof, HoofInterface *interface, 
 	}
 	else if ( HEAR( "left" ) )
 	{
-		if ( hoof->currentWord->left != NULL )
-		{
-			hoof->currentWord = hoof->currentWord->left;
-		}
+		/* we insert before currentWord, so we don't need to update currentWord here */
 		hoof->state = hoofStateNew;
 		SAY( "new" );
 	}	
 	else if ( HEAR( "right" ) )
 	{
-		/* we insert after currentWord, so we don't need to update currentWord here */
+		if ( hoof->currentWord->right != NULL )
+		{
+			hoof->currentWord = hoof->currentWord->right;
+		}
 		hoof->state = hoofStateNew;
 		SAY( "new" );
 	}	
@@ -575,11 +575,9 @@ HOOF_INTERNAL HOOF_RC hoofStateNew( Hoof *hoof, HoofInterface *interface, int *h
 	}
 	else if ( HEAR( "done" ) )
 	{
-		if (    hoof->currentWord->value == NULL
-		     && hoof->currentWord->right->value != NULL
-		   )
+		if ( hoof->currentWord->left->value != NULL )
 		{
-			hoof->currentWord = hoof->currentWord->right;
+			hoof->currentWord = hoof->currentWord->left;
 		}
 
 		hoof->state = hoofStateNavigate;

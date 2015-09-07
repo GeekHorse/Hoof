@@ -175,6 +175,7 @@ HOOF_INTERNAL HOOF_RC hoofWordVerify( char *word )
 	}
 	/* not word or number, must be empty word, which happens when the client
 	   is reading a value and calling hoofDo for each output word */
+	/* TODO: when we go to being able to output the entire value at once, clients wont have to repeatedly call hoofDo, and we'll never get an empty word */
 	else
 	{
 		ERR_IF( word[ 0 ] != '\0', HOOF_RC_ERROR_WORD_BAD );
@@ -242,12 +243,7 @@ HOOF_INTERNAL void hoofMakeCurrentValue( Hoof *hoof, HoofValue *value )
 {
 	/* CODE */
 	hoof->currentValue = value;
-	hoof->currentWord = hoof->currentValue->wordHead;
-
-	if ( hoof->currentWord->right->value != NULL )
-	{
-		hoof->currentWord = hoof->currentWord->right;
-	}
+	hoof->currentWord = hoof->currentValue->wordHead->right;
 
 	return;
 }
@@ -335,8 +331,7 @@ HOOF_INTERNAL void hoofMostIn( Hoof *hoof )
 
 /******************************************************************************/
 /*!
-	\brief Inserts a new word to the right of the current word, then makes the
-		new word the current word.
+	\brief Inserts a new word to the left of the current word.
 	\param[in] hoof Hoof context
 	\param[in] value Value of new word.
 	\return HOOF_RC
@@ -360,12 +355,11 @@ HOOF_INTERNAL HOOF_RC hoofWordInsert( Hoof *hoof, char *value )
 	newWord->value = newValue;
 	newValue = NULL;
 
-	newWord->left = hoof->currentWord;
-	newWord->right = hoof->currentWord->right;
+	newWord->left = hoof->currentWord->left;
+	newWord->right = hoof->currentWord;
 
-	hoof->currentWord->right->left = newWord;
-	hoof->currentWord->right = newWord;
-	hoof->currentWord = newWord;
+	hoof->currentWord->left->right = newWord;
+	hoof->currentWord->left = newWord;
 
 	newWord = NULL;
 

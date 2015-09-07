@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HOOF_COPYRIGHT "Copyright (C) 2014-2015 Jeremiah Martell"
 
-#define HOOF_VERSION_STRING "0.9.01"
+#define HOOF_VERSION_STRING "0.9.01-wip"
 #define HOOF_VERSION 9010
 #define HOOF_VERSION_MAJOR       ( HOOF_VERSION / 10000 )
 #define HOOF_VERSION_MINOR       ( ( HOOF_VERSION / 1000 ) % 10 )
@@ -74,6 +74,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /******************************************************************************/
 #define HOOF_MAX_WORD_LENGTH  31
+/* TODO: probably need to change the maximum word length to 32 */
+/* TODO: need max words per value, probably 32 too */
 
 /******************************************************************************/
 typedef struct HoofSTRUCT Hoof;
@@ -81,11 +83,21 @@ typedef struct HoofSTRUCT Hoof;
 typedef struct
 {
 	char inputWord[ HOOF_MAX_WORD_LENGTH + 1 ];
+	/* TODO: instead of having just 1 outputWord, have it be able to output the max + 1
+	the max so we can output the entire value, and +1 so we can prefix it with a word like
+	"error" or something */
 	char outputWord[ HOOF_MAX_WORD_LENGTH + 1 ];
-	int moreToOutput;
+	int moreToOutput; /* TODO then these two could go away */
 	int delayAfterSayingOutputWord;
 } HoofInterface;
 
+/* TODO: init needs to take an optional 'draw' function
+	or just have another function that gives hoof a draw function
+	need
+		draw_text, columns and rows, not x and y
+
+
+*/
 HOOF_RC hoofInit( char *filename, Hoof **hoof_A );
 void hoofFree( Hoof **hoof_F );
 

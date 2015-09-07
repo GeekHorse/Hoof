@@ -13,8 +13,8 @@ fi
 #check standards
 echo "Testing c89 c99 c11 standards"
 
-echo "c89"
 ./cleanup
+echo "c89"
 
 (cd ./source && gcc -std=c89 -pedantic -Wall -Werror -Wextra -c *.c)
 if [ $? -ne 0 ]; then
@@ -22,8 +22,8 @@ if [ $? -ne 0 ]; then
 	exit -1
 fi
 
-echo "c99"
 ./cleanup
+echo "c99"
 
 (cd ./source && gcc -std=c99 -pedantic -Wall -Werror -Wextra -c *.c)
 if [ $? -ne 0 ]; then
@@ -31,16 +31,16 @@ if [ $? -ne 0 ]; then
 	exit -1
 fi
 
-echo "c11"
 ./cleanup
+#echo "c11"
 
-(cd ./source && gcc -std=c11 -pedantic -Wall -Werror -Wextra -c *.c)
-if [ $? -ne 0 ]; then
-	echo "FAILED"
-	exit -1
-fi
+#(cd ./source && gcc -std=c11 -pedantic -Wall -Werror -Wextra -c *.c)
+#if [ $? -ne 0 ]; then
+#	echo "FAILED"
+#	exit -1
+#fi
 
-./cleanup
+#./cleanup
 
 # build
 if [ $1 = "fast" ] || [ $1 = "valgrind" ] || [ $1 = "paranoid" ]; then

@@ -142,6 +142,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* This is in case in the future we want to combine all the hoof .c files into
    one file, to help the compiler optimize, we can define HOOF_INTERNAL as
    static */
+/* TODO: after we combine all files into 1, remove this */
 #define HOOF_INTERNAL
 
 /******************************************************************************/
@@ -152,6 +153,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SAY( word ) \
 	hoofOutput( (word), interface->outputWord );
 
+/* TODO: when we can output 32/33 words at once, these will go away */
 #define MORE \
 	interface->moreToOutput = 1;
 
@@ -164,10 +166,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	pages have a value head and value tail, both with wordHead = NULL
 	pages can not be empty, they must contain at least 1 real value
 		the head value, a real value, and the tail value
+		TODO: this will change, pages should be able to be empty, and the current value can be the head or tail value
 	values have a word head and word tail, both with value = NULL
 	values can be empty
 		empty value is only word head and word tail
 	currentValue will never be a value head or value tail
+		TODO: this will change
 	currentWord may be a value head or a real word
 	root is the value head of the root page
 */
@@ -178,6 +182,7 @@ typedef struct HoofWordSTRUCT
 	struct HoofWordSTRUCT *left;
 	struct HoofWordSTRUCT *right;
 
+	/* TODO: consider changing this to char value[HOOF_MAX_WORD] ? */
 	char *value;
 } HoofWord;
 
@@ -198,6 +203,7 @@ struct HoofSTRUCT
 {
 	char *filename;
 
+	/* TODO: when we switch to a new file format, we can get rid of loading */
 	int loading;
 	int paused;
 	int literal;
@@ -209,6 +215,7 @@ struct HoofSTRUCT
 	HoofValue *currentValue;
 	HoofWord *currentWord;
 
+	/* TODO: when we change to be able to output all words in a value we can get rid of this */
 	HoofWord *readWord;
 };
 

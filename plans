@@ -1,4 +1,44 @@
+make sure all functionality is in hoofCore as single functions and not inline in the state machine
+
+need a tail value at the end of the page that can actually be the current line/value
+that way when we delete a line, we always go down, and it's not confusing if we go down, up, or out
+possibly also have a head value at the top of the page?
+
+change from ascii to hoof-encoding
+0-9 '0' through '9'
+10-35 'A' through 'Z'
+36 -
+37-62 reserved
+63 space
+
+max words per value is 30
+
+output doesnt do 'more to output' but can directly output up to 31 words
+	this is enough for "ok" and then a maximum 30 words of a value
+
+no more 'delay' 
+
+words need a type
+	text
+	number
+		with the raw s64 number in the word
+	binary
+
+the hoofDo function where we pass in a word, we can also pass in callbacks the 'server' can use to draw or play sounds
+
+
+
+change example client to be
+	hoof open file
+	?
+
 change from camelCase to underscores for names?
+
+move all c code into one file
+	update README to say just copy .c and .h and use
+
+replace
+	delete current word, start inserting where old word was
 
 undo, probably just undelete
 
@@ -40,6 +80,6 @@ n for new ... or nu nd nl nr ni no ?
 o for out
 r for right
 u for up
-l for line (v for value?)
+v for value
 w for word
 
