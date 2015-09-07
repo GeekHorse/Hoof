@@ -32,7 +32,7 @@ left is the previous word
 right is the next word
 in is the sublist
 out is the parent value
-before we said new right which means we wanted to start adding words to the right of the current word in the current value
+previously we said new right which means we wanted to start adding words to the right of the current word in the current value
 now lets add two new values
 	new down 
 	new 

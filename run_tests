@@ -11,21 +11,12 @@ if [ $1 != "fast" ] && [ $1 != "valgrind" ] && [ $1 != "paranoid" ] && [ $1 != "
 fi
 
 #check standards
-echo "Testing c89 c99 c11 standards"
-
-./cleanup
-echo "c89"
-
-(cd ./source && gcc -std=c89 -pedantic -Wall -Werror -Wextra -c *.c)
-if [ $? -ne 0 ]; then
-	echo "FAILED"
-	exit -1
-fi
+echo "Testing c99 c11 standards"
 
 ./cleanup
 echo "c99"
 
-(cd ./source && gcc -std=c99 -pedantic -Wall -Werror -Wextra -c *.c)
+(cd ./source && gcc -std=c99 -pedantic -Wall -Werror -Wextra -c hoof.c)
 if [ $? -ne 0 ]; then
 	echo "FAILED"
 	exit -1
@@ -34,7 +25,7 @@ fi
 ./cleanup
 #echo "c11"
 
-#(cd ./source && gcc -std=c11 -pedantic -Wall -Werror -Wextra -c *.c)
+#(cd ./source && gcc -std=c11 -pedantic -Wall -Werror -Wextra -c hoof.c)
 #if [ $? -ne 0 ]; then
 #	echo "FAILED"
 #	exit -1
@@ -45,82 +36,70 @@ fi
 # build
 if [ $1 = "fast" ] || [ $1 = "valgrind" ] || [ $1 = "paranoid" ]; then
 	if [ $1 = "paranoid" ]; then
-		(cd ./source && gcc -O3 -DHOOF_BE_PARANOID -DHOOF_USE_MEM_HOOKS -DHOOF_USE_FILE_HOOKS -c *.c)
+		(cd ./source && gcc -O3 -Dhoof_be_paranoid -Dhoof_use_mem_hooks -Dhoof_use_file_hooks -Dhoof_enable_logging -c hoof.c)
 		if [ $? -ne 0 ]; then
 			echo "FAILED TO COMPILE"
 			exit -1
 		fi
 	else
-		(cd ./source && gcc -O3 -DHOOF_USE_MEM_HOOKS -DHOOF_USE_FILE_HOOKS -c *.c)
+		(cd ./source && gcc -O3 -Dhoof_use_mem_hooks -Dhoof_use_file_hooks -Dhoof_enable_logging -c hoof.c)
 		if [ $? -ne 0 ]; then
 			echo "FAILED TO COMPILE"
 			exit -1
 		fi
 	fi
 
-	(cd ./source && ar rcs libHoof.a *.o)
-	if [ $? -ne 0 ]; then
-		echo "FAILED TO BUILD libHoof.a"
-		exit -1
-	fi
-
-	(cd ./exampleClient && gcc -O3 -DHOOF_DEBUG -I ../source -c exampleClient.c -o exampleClient.o)
+	(cd ./example_client && gcc -O3 -Dhoof_debug -I ../source -c example_client.c -o example_client.o)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO COMPILE EXAMPLE CLIENT"
 		exit -1
 	fi
 
-	(cd ./exampleClient && gcc -O3 exampleClient.o ../source/libHoof.a -o ../hoof)
+	(cd ./example_client && gcc -O3 example_client.o ../source/hoof.o -o ../hoof)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO LINK EXAMPLE CLIENT"
 		exit -1
 	fi
 
-	(cd ./tests/misc && gcc -O3 -DHOOF_DEBUG -I ../../source -c testMisc.c -o testMisc.o)
+	(cd ./tests/misc && gcc -O3 -Dhoof_debug -I ../../source -c misc.c -o misc.o)
 	if [ $? -ne 0 ]; then
-		echo "FAILED TO COMPILE testMisc"
+		echo "FAILED TO COMPILE misc"
 		exit -1
 	fi
 
-	(cd ./tests/misc && gcc -O3 testMisc.o ../../source/libHoof.a -o testMisc)
+	(cd ./tests/misc && gcc -O3 misc.o ../../source/hoof.o -o misc)
 	if [ $? -ne 0 ]; then
-		echo "FAILED TO LINK testMisc"
+		echo "FAILED TO LINK misc"
 		exit -1
 	fi
 elif [ $1 = "coverage" ]; then
-	(cd ./source && gcc -fprofile-arcs -ftest-coverage -g -DHOOF_USE_MEM_HOOKS -DHOOF_USE_FILE_HOOKS -c *.c)
+	(cd ./source && gcc -fprofile-arcs -ftest-coverage -g -Dhoof_use_mem_hooks -Dhoof_use_file_hooks -Dhoof_enable_logging -c hoof.c)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO COMPILE"
 		exit -1
 	fi
 
-	(cd ./source && ar rcs libHoof.a *.o)
-	if [ $? -ne 0 ]; then
-		echo "FAILED TO BUILD libHoof.a"
-		exit -1
-	fi
-
-	(cd ./exampleClient && gcc -g -DHOOF_DEBUG -I ../source -c exampleClient.c -o exampleClient.o)
+	(cd ./example_client && gcc -g -Dhoof_debug -I ../source -c example_client.c -o example_client.o)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO COMPILE EXAMPLE CLIENT"
 		exit -1
 	fi
 
-	(cd ./exampleClient && gcc -fprofile-arcs exampleClient.o ../source/libHoof.a -o ../hoof)
+	(cd ./example_client && gcc -fprofile-arcs example_client.o ../source/hoof.o -o ../hoof)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO LINK EXAMPLE CLIENT"
 		exit -1
 	fi
 
-	(cd ./tests/misc && gcc -g -DHOOF_DEBUG -I ../../source -c testMisc.c -o testMisc.o)
+	(cd ./tests/misc && gcc -g -Dhoof_debug -I ../../source -c misc.c -o misc.o)
 	if [ $? -ne 0 ]; then
-		echo "FAILED TO COMPILE testMisc"
+		echo "FAILED TO COMPILE misc"
 		exit -1
 	fi
 
-	(cd ./tests/misc && gcc -fprofile-arcs testMisc.o ../../source/libHoof.a -o testMisc)
+	(cd ./tests/misc && gcc -fprofile-arcs misc.o ../../source/hoof.o -o misc)
 	if [ $? -ne 0 ]; then
-		echo "FAILED TO LINK testMisc"
+		echo "FAILED TO LINK misc"
 		exit -1
 	fi
 fi
@@ -170,6 +149,7 @@ do
 		if [ "$1" = "fast" ]; then
 			rm -f outread
 			rm -f outa
+			rm -f outerror
 
 			if [ -e $f2.load ]; then
 				cp $f2.load outa
@@ -177,7 +157,7 @@ do
 				touch outa
 			fi
 
-			cat $f2 | ./hoof outa $counter > outread 2>/dev/null
+			cat $f2 | ./hoof outa $counter > outread 2>outerror
 
 			result=$?
 
@@ -199,6 +179,7 @@ do
 
 				rm -f outread
 				rm -f outa
+				rm -f outerror
 
 				if [ -e $f2.load ]; then
 					cp $f2.load outa
@@ -207,9 +188,9 @@ do
 				fi
 
 				if [ "$1" = "valgrind" ]; then
-					cat $f2 | valgrind -q --leak-check=full ./hoof outa $counter > outread 2>/dev/null
+					cat $f2 | valgrind -q --leak-check=full ./hoof outa $counter > outread 2>outerror
 				else
-					cat $f2 | ./hoof outa $counter > outread 2>/dev/null
+					cat $f2 | ./hoof outa $counter > outread 2>outerror
 				fi
 
 				result=$?
@@ -253,10 +234,11 @@ do
 		fi
 
 		if [ "$1" = "fast" ]; then
+			rm -f outerror
 			rm -f outb
 			cp outa outb
 
-			echo "save" | ./hoof outb $counter >/dev/null 2>/dev/null
+			echo "save" | ./hoof outb $counter >/dev/null 2>outerror
 
 			result=$?
 
@@ -274,12 +256,13 @@ do
 			while true; do
 				let counter=counter+1
 
+				rm -f outerror
 				rm -f outb
 				cp outa outb
 				if [ "$1" = "valgrind" ]; then
-					echo "save" | valgrind -q --leak-check=full ./hoof outb $counter >/dev/null 2>/dev/null
+					echo "save" | valgrind -q --leak-check=full ./hoof outb $counter >/dev/null 2>outerror
 				else
-					echo "save" | ./hoof outb $counter >/dev/null 2>/dev/null
+					echo "save" | ./hoof outb $counter >/dev/null 2>outerror
 				fi
 
 				result=$?
@@ -319,7 +302,7 @@ done
 rm -f outa
 rm -f outb
 rm -f outread
-
+rm -f outerror
 
 echo "Testing bad cases"
 
@@ -335,13 +318,14 @@ do
 		while true; do
 			let counter=counter+1
 
+			rm -f outerror
 			rm -f bad
 			cp $f2 bad
 
 			if [ "$1" = "valgrind" ]; then
-				echo "save" | valgrind -q --leak-check=full ./hoof bad >/dev/null 2>/dev/null
+				echo "save" | valgrind -q --leak-check=full ./hoof bad >/dev/null 2>outerror
 			else
-				echo "save" | ./hoof bad >/dev/null 2>/dev/null
+				echo "save" | ./hoof bad >/dev/null 2>outerror
 			fi
 
 			result=$?
@@ -367,13 +351,14 @@ do
 done
 
 rm -f bad
+rm -f outerror
 
 # test read in file we load
 cp ./tests/badFileWithRead ./bad
 if [ "$1" = "valgrind" ]; then
-	echo "save" | valgrind -q --leak-check=full ./hoof bad >/dev/null 2>/dev/null
+	echo "save" | valgrind -q --leak-check=full ./hoof bad >/dev/null 2>outerror
 else
-	echo "save" | ./hoof bad >/dev/null 2>/dev/null
+	echo "save" | ./hoof bad >/dev/null 2>outerror
 fi
 if [ $? -eq 0 ]; then
 	echo "FAILED   BAD FILE WITH READ SUCCEEDED BUT SHOULD HAVE FAILED"
@@ -381,18 +366,21 @@ if [ $? -eq 0 ]; then
 fi
 
 rm -f bad
+rm -f outerror
 
 
 echo "Testing misc cases"
 if [ "$1" = "valgrind" ]; then
-	(cd ./tests/misc && valgrind -q --leak-check=full ./testMisc >/dev/null 2>/dev/null)
+	(cd ./tests/misc && valgrind -q --leak-check=full ./misc >/dev/null 2>outerror)
 else
-	(cd ./tests/misc && ./testMisc >/dev/null 2>/dev/null)
+	(cd ./tests/misc && ./misc >/dev/null 2>outerror)
 fi
 if [ $? -ne 0 ]; then
 	echo "FAILED   MISC TESTS FAILED"
 	exit -1
 fi
+
+(cd ./tests/misc && rm -f outerror)
 
 echo "SUCCESS"
 

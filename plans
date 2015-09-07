@@ -23,11 +23,6 @@ change example client to be
 	hoof open file
 	?
 
-change from camelCase to underscores for names?
-
-move all c code into one file
-	update README to say just copy .c and .h and use
-
 replace
 	delete current word, start inserting where old word was
 

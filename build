@@ -3,12 +3,12 @@
 set -e
 
 ./cleanup
+(cd ./source && gcc -std=c99 -pedantic -Wall -Werror -Wextra -c hoof.c)
 
-(cd ./source && gcc -O3 -c *.c)
-(cd ./source && ar rcs libHoof.a *.o)
-
-(cd ./exampleClient && gcc -O3 -I ../source/ -c exampleClient.c -o exampleClient.o)
-(cd ./exampleClient && gcc -O3 exampleClient.o ../source/libHoof.a -o ../hoof)
+./cleanup
+(cd ./source && gcc -O3 -I . -c hoof.c -o hoof.o)
+(cd ./example_client && gcc -O3 -I ../source/ -c example_client.c -o example_client.o)
+(cd ./example_client && gcc -O3 example_client.o ../source/hoof.o -o ../hoof)
 
 strip -s ./hoof
 

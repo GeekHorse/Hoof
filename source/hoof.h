@@ -1,112 +1,72 @@
-/*
-Copyright (c) 2014-2015 Jeremiah Martell
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
-
-    - Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
-    - Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-    - Neither the name of Jeremiah Martell nor the name of GeekHorse nor the
-      name of Hoof nor the names of its contributors may be used to endorse
-      or promote products derived from this software without specific prior
-      written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-/******************************************************************************/
-#ifndef hoof_H
-#define hoof_H
-
-/******************************************************************************/
-#define HOOF_NAME "Hoof"
-
-#define HOOF_COPYRIGHT "Copyright (C) 2014-2015 Jeremiah Martell"
-
-#define HOOF_VERSION_STRING "0.9.01-wip"
-#define HOOF_VERSION 9010
-#define HOOF_VERSION_MAJOR       ( HOOF_VERSION / 10000 )
-#define HOOF_VERSION_MINOR       ( ( HOOF_VERSION / 1000 ) % 10 )
-#define HOOF_VERSION_SUBMINOR    ( ( HOOF_VERSION / 10 ) % 100 )
-#define HOOF_VERSION_FINAL       ( HOOF_VERSION % 10 )
-
-/******************************************************************************/
-#define HOOF_LIBRARY_NUMBER 300
-
-/******************************************************************************/
-#define HOOF_RC int
-
-#define HOOF_RC_SUCCESS                          0
-#define HOOF_RC_ERROR_PRECOND                    1
-#define HOOF_RC_ERROR_MEMORY                     2
-#define HOOF_RC_ERROR_FILE                       3
-#define HOOF_RC_ERROR_NETWORK                    4
-#define HOOF_RC_ERROR_STANDARD_LIBRARY           5
-#define HOOF_RC_ERROR_FAILURE_POINT              6
-
-/* This must be kept in sync with the above defines */
-#define HOOF_RC_STANDARD_ERRORS_MAX              6
-
-/* Hoof specific rc values */
-#define HOOF_RC_QUIT                             301
-#define HOOF_RC_ERROR_FILENAME_BAD               302
-#define HOOF_RC_ERROR_FILENAME_LONG              303
-#define HOOF_RC_ERROR_FILE_BAD                   304
-#define HOOF_RC_ERROR_WORD_BAD                   305
-#define HOOF_RC_ERROR_WORD_LONG                  306
-#define HOOF_RC_ERROR_VALUE_LONG                 307
-
-/* These must be kept in sync with the above defines */
-#define HOOF_RC_HOOF_ERRORS_MIN                  301
-#define HOOF_RC_HOOF_ERRORS_MAX                  307
-
-/******************************************************************************/
-/* TODO: rename these: hoof_word_length_max hoof_value_length_max */
-#define HOOF_MAX_WORD_LENGTH  31
-/* TODO: probably need to change the maximum word length to 32 */
-/* TODO: need max words per value, probably 32 too */
-#define HOOF_MAX_VALUE_LENGTH 30
-/* TODO: or change both of these to 30 */
-
-/******************************************************************************/
-typedef struct HoofSTRUCT Hoof;
-
-typedef struct
-{
-	char inputWord[ HOOF_MAX_WORD_LENGTH + 1 ];
-	/* TODO: instead of having just 1 outputWord, have it be able to output the max + 1
-	the max so we can output the entire value, and +1 so we can prefix it with a word like
-	"error" or something */
-	char outputValue[ HOOF_MAX_VALUE_LENGTH + 1 ][ HOOF_MAX_WORD_LENGTH + 1 ];
-} HoofInterface;
-
-/* TODO: init needs to take an optional 'draw' function
-	or just have another function that gives hoof a draw function
-	need
-		draw_text, columns and rows, not x and y
-
-
-*/
-HOOF_RC hoofInit( char *filename, Hoof **hoof_A );
-void hoofFree( Hoof **hoof_F );
-
-HOOF_RC hoofDo( Hoof *hoof, HoofInterface *hoofInterface );
-
-const char *hoofRCToString( int rc );
-
-/******************************************************************************/
-#endif
-
+// copyright 2014 to 2015 jeremiah martell
+// all rights reserved
+/* LICENSE BSD 3 CLAUSE
+	Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+	- Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+	- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+	- Neither the name of Jeremiah Martell nor the name of Geek Horse nor the name of Hoof nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	*/
+#ifndef hoof_h
+	#define hoof_h
+	// includes
+		#include <inttypes.h>
+	// you only need 2 atomic types, byte and large signed integer
+		// byte
+		#ifndef b
+			#define b uint8_t
+			#endif
+		// large signed integer
+		#ifndef n
+			#define n int64_t
+			#endif
+	// hoof information
+		#define hoof_name "hoof"
+		#define hoof_copyright "copyright 2014-2015 jeremiah martell"
+		#define hoof_version_string "0 9 01 wip"
+		#define hoof_version 9010
+		#define hoof_version_major       ( hoof_version / 10000 )
+		#define hoof_version_minor       ( ( hoof_version / 1000 ) % 10 )
+		#define hoof_version_subminor    ( ( hoof_version / 10 ) % 100 )
+		#define hoof_version_final       ( hoof_version % 10 )
+	// standard geek horse rc
+		#define hoof_rc_success                       0
+		#define hoof_rc_error_precond                 1
+		#define hoof_rc_error_memory                  2
+		#define hoof_rc_error_file                    3
+		#define hoof_rc_error_network                 4
+		#define hoof_rc_error_standard_library        5
+		#define hoof_rc_error_failure_point           6
+		#define hoof_rc_standard_errors_max           6
+	// hoof rc
+		#define hoof_rc_quit                        301
+		#define hoof_rc_error_filename_bad          302
+		#define hoof_rc_error_filename_long         303
+		#define hoof_rc_error_file_bad              304
+		#define hoof_rc_error_word_bad              305
+		#define hoof_rc_error_word_long             306
+		#define hoof_rc_error_value_long            307
+		#define hoof_rc_hoof_errors_min             301
+		#define hoof_rc_hoof_errors_max             307
+	// defines
+		// TODO: rename these: hoof_word_length_max hoof_value_length_max
+		#define hoof_max_word_length  31
+		// TODO: probably need to change the maximum word length to 32
+		// TODO: need max words per value, probably 32 too
+		#define hoof_max_value_length 30
+		// TODO: or change both of these to 30
+	// types
+		struct hoof ;
+		struct hoof_interface
+			{
+			b input_word [ hoof_max_word_length + 1 ] ;
+			b output_value [ hoof_max_value_length + 1 ] [ hoof_max_word_length + 1 ] ;
+			} ;
+		typedef void ( * hoof_draw_function )( n column , n row , b * text ) ;
+	// public functions
+		n hoof_init( b * filename , struct hoof * * hoof_a ) ;
+		void hoof_free( struct hoof * * hoof_f ) ;
+		n hoof_set_draw_function( struct hoof * hoof , n max_columns , n max_rows , hoof_draw_function draw_function ) ;
+		n hoof_do( struct hoof * hoof , struct hoof_interface * hoof_interface ) ;
+		const b * hoof_rc_to_string( n rc ) ;
+	#endif

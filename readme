@@ -15,25 +15,19 @@ website is geekhorse dot com
 size of the library is less than 20 kilobytes
 
 hoof is a high quality library
-compiles without warnings against c 89 c 99 and c 11 standards
+compiles without warnings against c 99 and c 11 standards
 checks and handles all error conditions
-if malloc fails will not crash or corrupt memory or corrupt state but will safely return an out of memory return code
+if malloc fails hoof will not crash or corrupt memory or corrupt state but will safely return an out of memory return code
 valgrind reports no memory leaks or errors
 test coverage is 100 percent branch coverage
-all code is documented
 all functions are reentrant
 contains no third party code
 written entirely by jeremiah
 
-to build just run the script named build
+to use hoof you only need to copy the hoof dot c and hoof dot h files into your project
 hoof has no dependencies other than standard c libraries
 the only standard c functions hoof requres are malloc calloc free strcmp fopen fread fwrite fclose rename and remove
-to build manually just compile the c files in the source directory and create a static library
-	cd source
-	gcc -c *.c
-	ar rcs libHoof.a *.o
 
-if you want to change the functions that hoof calls for malloc calloc and free then define HOOF_USE_MEM_HOOKS and provide hoofHookMalloc hoofHookCalloc and hoofHookFree
-if you want errors logged then define HOOF_ENABLE_LOGGING and provide hoofHookLog
-if you want to modify hoof then define HOOF_BE_PARANOID to turn on extra paranoid checks in the library
-
+if you want to change the functions that hoof calls for malloc calloc and free then define hoof_use_mem_hooks and provide hoof_hook_malloc hoof_hook_calloc and hoof_hook_free
+if you want errors logged then define hoof_enable_logging and provide hoof_hook_log
+if you want to modify hoof then define hoof_be_paranoid to turn on extra paranoid checks in the library

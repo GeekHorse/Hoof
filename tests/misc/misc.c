@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /******************************************************************************/
-#define TEST_ERR_IF( x ) \
+#define test_err_if( x ) \
 	if ( (x) ) \
 	{ \
 		printf( "FAILED ON LINE: %d\n", __LINE__ ); \
@@ -47,51 +47,57 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /******************************************************************************/
-void *hoofHookMalloc( size_t size )
+void *hoof_hook_malloc( size_t size )
 {
 	return malloc( size );
 }
 
 /******************************************************************************/
-void *hoofHookCalloc( size_t nmemb, size_t size )
+void *hoof_hook_calloc( size_t nmemb, size_t size )
 {
 	return calloc( nmemb, size );
 }
 
 /******************************************************************************/
-void hoofHookFree( void *ptr )
+void hoof_hook_free( void *ptr )
 {
 	free( ptr );
 }
 
 /******************************************************************************/
-FILE *hoofHookFopen( const char *path, const char *mode )
+FILE *hoof_hook_fopen( const char *path, const char *mode )
 {
 	return fopen( path, mode );
 }
 
 /******************************************************************************/
-size_t hoofHookFread( void *ptr, size_t size, size_t nmemb, FILE *stream )
+size_t hoof_hook_fread( void *ptr, size_t size, size_t nmemb, FILE *stream )
 {
 	return fread( ptr, size, nmemb, stream );
 }
 
 /******************************************************************************/
-size_t hoofHookFwrite( const void *ptr, size_t size, size_t nmemb, FILE *stream )
+size_t hoof_hook_fwrite( const void *ptr, size_t size, size_t nmemb, FILE *stream )
 {
 	return fwrite( ptr, size, nmemb, stream );
 }
 
 /******************************************************************************/
-int hoofHookRename( const char *oldpath, const char *newpath )
+int hoof_hook_rename( const char *oldpath, const char *newpath )
 {
 	return rename( oldpath, newpath );
 }
 
 /******************************************************************************/
-int hoofHookRemove( const char *pathname )
+int hoof_hook_remove( const char *pathname )
 {
 	return remove( pathname );
+}
+
+void hoof_hook_log( char * library , n line_number , n rc , n a , n b , n c )
+{
+	fprintf( stderr , "%s : %jd %jd : %jd %jd %jd\n" , library , line_number , rc , a , b , c ) ;
+	fflush( stderr ) ;
 }
 
 /******************************************************************************/
@@ -100,51 +106,51 @@ int main( int argc, char **argv )
 	/* DATA */
 	int rc = 0;
 
-	Hoof *hoof = NULL;
-	HoofInterface interface;
+	struct hoof *hoof = NULL;
+	struct hoof_interface interface;
 
-	const char *rcString = NULL;
+	const char *rc_string = NULL;
 
 	int i = 0;
 
 
 	/* CODE */
-	/* test NULL to hoofFree */
-	hoofFree( NULL );
+	/* test NULL to hoof_free */
+	hoof_free( NULL );
 
-	/* test bad rcs to hoofRCToString */
-	rcString = hoofRCToString( -1 );
-	TEST_ERR_IF( strcmp( rcString, "Unknown Error" ) != 0 );
+	/* test bad rcs to hoof_rc_to_string */
+	rc_string = hoof_rc_to_string( -1 );
+	test_err_if( strcmp( rc_string, "Unknown Error" ) != 0 );
 	
-	rcString = hoofRCToString( HOOF_RC_HOOF_ERRORS_MIN - 1 );
-	TEST_ERR_IF( strcmp( rcString, "Unknown Error" ) != 0 );
+	rc_string = hoof_rc_to_string( hoof_rc_hoof_errors_min - 1 );
+	test_err_if( strcmp( rc_string, "Unknown Error" ) != 0 );
 
-	rcString = hoofRCToString( HOOF_RC_HOOF_ERRORS_MAX + 1 );
-	TEST_ERR_IF( strcmp( rcString, "Unknown Error" ) != 0 );
+	rc_string = hoof_rc_to_string( hoof_rc_hoof_errors_max + 1 );
+	test_err_if( strcmp( rc_string, "Unknown Error" ) != 0 );
 
 	/* init */
-	rc = hoofInit( "misc", &hoof );
-	TEST_ERR_IF( rc != HOOF_RC_SUCCESS );
+	rc = hoof_init( "miscdata", &hoof );
+	test_err_if( rc != hoof_rc_success );
 
 	/* just get past the "hello" */
-	strcpy( interface.inputWord, "" );
-	rc = hoofDo( hoof, &interface );
+	strcpy( interface.input_word, "" );
+	rc = hoof_do( hoof, &interface );
 
-	/* test bad inputWord   normal word */
-	for ( i = 0; i < ( HOOF_MAX_WORD_LENGTH + 1 ); i += 1 )
+	/* test bad input_word   normal word */
+	for ( i = 0; i < ( hoof_max_word_length + 1 ); i += 1 )
 	{
-		interface.inputWord[ i ] = 'x';
+		interface.input_word[ i ] = 'x';
 	}
-	rc = hoofDo( hoof, &interface );
-	TEST_ERR_IF( rc != HOOF_RC_ERROR_WORD_LONG );
+	rc = hoof_do( hoof, &interface );
+	test_err_if( rc != hoof_rc_error_word_long );
 
-	/* test bad inputWord   number */
-	for ( i = 0; i < ( HOOF_MAX_WORD_LENGTH + 1 ); i += 1 )
+	/* test bad input_word   number */
+	for ( i = 0; i < ( hoof_max_word_length + 1 ); i += 1 )
 	{
-		interface.inputWord[ i ] = '5';
+		interface.input_word[ i ] = '5';
 	}
-	rc = hoofDo( hoof, &interface );
-	TEST_ERR_IF( rc != HOOF_RC_ERROR_WORD_LONG );
+	rc = hoof_do( hoof, &interface );
+	test_err_if( rc != hoof_rc_error_word_long );
 
 	/* signal success */
 	rc = 0;
@@ -153,7 +159,7 @@ int main( int argc, char **argv )
 	/* CLEANUP */
 	cleanup:
 
-	hoofFree( &hoof );
+	hoof_free( &hoof );
 
 	return rc;
 }
