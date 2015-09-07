@@ -347,7 +347,8 @@ HOOF_INTERNAL HOOF_RC hoofLoad( Hoof *hoof )
 
 		/* feed into hoofDo */
 		ERR_PASSTHROUGH( hoofDo( hoof, &interface ) );
-		ERR_IF( interface.moreToOutput, HOOF_RC_ERROR_FILE_BAD );
+		/* TODO: when we have a better loading file format, this can go away */
+		ERR_IF( interface.outputValue[ 1 ][ 0 ] != '\0', HOOF_RC_ERROR_FILE_BAD );
 	}
 
 	hoofRoot( hoof );

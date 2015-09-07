@@ -76,10 +76,10 @@ HOOF_INTERNAL HOOF_RC hoofStateNavigate( Hoof *hoof, HoofInterface *interface, i
 	/* DATA */
 	HOOF_RC rc = HOOF_RC_SUCCESS;
 
+	HoofWord *readWord = NULL;
+
 
 	/* CODE */
-	PARANOID_ERR_IF( hoof->readWord != NULL );
-
 	if ( HEAR( "quit" ) )
 	{
 		ERR_IF( hoof->loading, HOOF_RC_ERROR_FILE_BAD );
@@ -186,41 +186,32 @@ HOOF_INTERNAL HOOF_RC hoofStateNavigate( Hoof *hoof, HoofInterface *interface, i
 		if ( hoof->currentWord->value == NULL )
 		{
 			SAY( "empty" );
-			hoof->state = hoofStateNavigate;
 		}
 		else
 		{
-			hoof->readWord = hoof->currentWord;
-
 			SAY( "ok" );
-			hoof->state = hoofStateReadWord;
-			MORE;
-			DELAY;
+			SAY( hoof->currentWord->value );
 		}
+		hoof->state = hoofStateNavigate;
 	}
 	else if ( HEAR( "value" ) )
 	{
-		hoof->readWord = hoof->currentWord;
-		while (    hoof->readWord->left != NULL
-		        && hoof->readWord->left->value != NULL
-		      )
-		{
-			hoof->readWord = hoof->readWord->left;
-		}
+		readWord = hoof->currentValue->wordHead->right;
 
-		if ( hoof->readWord->value == NULL )
+		if ( readWord->value == NULL )
 		{
 			SAY( "empty" );
-			hoof->readWord = NULL;
-			hoof->state = hoofStateNavigate;
 		}
 		else
 		{
 			SAY( "ok" );
-			hoof->state = hoofStateReadValue;
-			MORE;
-			DELAY;
+			while ( readWord->value != NULL )
+			{
+				SAY( readWord->value );
+				readWord = readWord->right;
+			}
 		}
+		hoof->state = hoofStateNavigate;
 	}
 	else if ( HEAR( "most" ) )
 	{
@@ -331,96 +322,6 @@ HOOF_INTERNAL HOOF_RC hoofStateMostChoice( Hoof *hoof, HoofInterface *interface,
 	else
 	{
 		(*huh) = 1;
-	}
-
-
-	/* CLEANUP */
-	/* cleanup: */
-
-	return rc;
-}
-
-/******************************************************************************/
-/*!
-	\brief State read word. Reads a word then goes back to navigate.
-	\param[in] hoof Hoof Context.
-	\param[in] interface Hoof Interface.
-	\param[out] huh If this state doesn't understand the input word, it will
-		set huh to 1.
-	\return HOOF_RC
-*/
-HOOF_INTERNAL HOOF_RC hoofStateReadWord( Hoof *hoof, HoofInterface *interface, int *huh )
-{
-	/* DATA */
-	HOOF_RC rc = HOOF_RC_SUCCESS;
-
-
-	/* CODE */
-	(void)huh;
-
-	if ( HEAR( "cancel" ) )
-	{
-		SAY( "cancel" );
-		hoof->readWord = NULL;
-
-		hoof->state = hoofStateNavigate;
-	}
-	else
-	{
-		SAY( hoof->readWord->value );
-		hoof->readWord = NULL;
-
-		hoof->state = hoofStateNavigate;
-	}
-
-
-	/* CLEANUP */
-	/* cleanup: */
-
-	return rc;
-}
-
-/******************************************************************************/
-/*!
-	\brief State read value. Reads current value then goes back to navigate. Does
-		not affect current word.
-	\param[in] hoof Hoof Context.
-	\param[in] interface Hoof Interface.
-	\param[out] huh If this state doesn't understand the input word, it will
-		set huh to 1.
-	\return HOOF_RC
-*/
-HOOF_INTERNAL HOOF_RC hoofStateReadValue( Hoof *hoof, HoofInterface *interface, int *huh )
-{
-	/* DATA */
-	HOOF_RC rc = HOOF_RC_SUCCESS;
-
-
-	/* CODE */
-	(void)huh;
-
-	if ( HEAR( "cancel" ) )
-	{
-		SAY( "cancel" );
-		hoof->readWord = NULL;
-
-		hoof->state = hoofStateNavigate;
-	}
-	else
-	{
-		SAY( hoof->readWord->value );
-		hoof->readWord = hoof->readWord->right;
-
-		if ( hoof->readWord->value != NULL )
-		{
-			MORE;
-		}
-		else
-		{
-			hoof->readWord = NULL;
-
-			hoof->state = hoofStateNavigate;
-		}
 	}
 
 

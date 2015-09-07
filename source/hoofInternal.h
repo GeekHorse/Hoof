@@ -151,14 +151,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	(strcmp( (word), interface->inputWord ) == 0)
 
 #define SAY( word ) \
-	hoofOutput( (word), interface->outputWord );
-
-/* TODO: when we can output 32/33 words at once, these will go away */
-#define MORE \
-	interface->moreToOutput = 1;
-
-#define DELAY \
-	interface->delayAfterSayingOutputWord = 1;
+	hoofOutput( (word), interface );
 
 /******************************************************************************/
 /*
@@ -214,14 +207,11 @@ struct HoofSTRUCT
 
 	HoofValue *currentValue;
 	HoofWord *currentWord;
-
-	/* TODO: when we change to be able to output all words in a value we can get rid of this */
-	HoofWord *readWord;
 };
 
 /******************************************************************************/
 /* hoofCore.c */
-HOOF_INTERNAL void hoofOutput( const char *whatToOutput, char *outputWord );
+HOOF_INTERNAL void hoofOutput( const char *whatToOutput, HoofInterface *interface );
 HOOF_INTERNAL HOOF_RC hoofWordVerify( char *word );
 HOOF_INTERNAL HOOF_RC hoofStrdup( char *wordIn, char **wordOut_A );
 HOOF_INTERNAL void hoofMakeCurrentValue( Hoof *hoof, HoofValue *value );

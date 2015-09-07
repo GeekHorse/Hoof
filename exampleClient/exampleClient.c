@@ -173,7 +173,7 @@ int main( int argc, char **argv )
 
 	int hadInput = 0;
 	int hadOutput = 0;
-
+	int i = 0;
 
 
 	/* CODE */
@@ -224,42 +224,41 @@ int main( int argc, char **argv )
 	while ( 1 )
 	{
 		/* give input and print any response */
-		do
+		rc = hoofDo( hoof, &interface );
+		if ( rc == HOOF_RC_QUIT )
 		{
-			rc = hoofDo( hoof, &interface );
-			if ( rc == HOOF_RC_QUIT )
+			done = 1;
+		}
+		else if ( rc != HOOF_RC_SUCCESS )
+		{
+			fprintf( stderr, "\nERROR hoofDo failed %s\n", hoofRCToString( rc ) );
+			fflush( stderr );
+			if ( ! interactive )
 			{
 				done = 1;
 			}
-			else if ( rc != HOOF_RC_SUCCESS )
-			{
-				fprintf( stderr, "\nERROR hoofDo failed %s\n", hoofRCToString( rc ) );
-				fflush( stderr );
-				if ( ! interactive )
-				{
-					done = 1;
-				}
-			}
+		}
 
-			if ( interface.outputWord[ 0 ] != '\0' )
+		if ( interface.outputValue[ 0 ][ 0 ] != '\0' )
+		{
+			/* insert newline between input and output */
+			if ( hadInput == 1 && interactive )
 			{
-				/* insert newline between input and output */
-				if ( hadInput == 1 && interactive )
-				{
-					printf( "\n" );
-				}
-				hadInput = 0;
-				hadOutput = 1;
-				printf( "%s ", interface.outputWord );
-				fflush( stdout );
+				printf( "\n" );
 			}
-
-			if ( interface.delayAfterSayingOutputWord )
+			hadInput = 0;
+			hadOutput = 1;
+			printf( "%s ", interface.outputValue[ 0 ] );
+			if ( interface.outputValue[ 1 ][ 0 ] != '\0' )
 			{
 				printf( "  " );
-				fflush( stdout );
 			}
-		} while ( interface.moreToOutput );
+			for ( i = 1; i <= HOOF_MAX_VALUE_LENGTH && interface.outputValue[ i ][ 0 ] != '\0'; i += 1 )
+			{
+				printf( "%s ", interface.outputValue[ i ] );
+			}
+			fflush( stdout );
+		}
 
 		if ( hadOutput )
 		{

@@ -122,35 +122,13 @@ int main( int argc, char **argv )
 	rcString = hoofRCToString( HOOF_RC_HOOF_ERRORS_MAX + 1 );
 	TEST_ERR_IF( strcmp( rcString, "Unknown Error" ) != 0 );
 
-	/* test cancelling reads */
+	/* init */
 	rc = hoofInit( "misc", &hoof );
 	TEST_ERR_IF( rc != HOOF_RC_SUCCESS );
 
 	/* just get past the "hello" */
 	strcpy( interface.inputWord, "" );
 	rc = hoofDo( hoof, &interface );
-
-	/* read word */
-	strcpy( interface.inputWord, "word" );
-	rc = hoofDo( hoof, &interface );
-	TEST_ERR_IF( rc != HOOF_RC_SUCCESS );
-	TEST_ERR_IF( interface.moreToOutput != 1 );
-
-	strcpy( interface.inputWord, "cancel" );
-	rc = hoofDo( hoof, &interface );
-	TEST_ERR_IF( rc != HOOF_RC_SUCCESS );
-	TEST_ERR_IF( interface.moreToOutput == 1 );
-
-	/* read value */
-	strcpy( interface.inputWord, "value" );
-	rc = hoofDo( hoof, &interface );
-	TEST_ERR_IF( rc != HOOF_RC_SUCCESS );
-	TEST_ERR_IF( interface.moreToOutput != 1 );
-
-	strcpy( interface.inputWord, "cancel" );
-	rc = hoofDo( hoof, &interface );
-	TEST_ERR_IF( rc != HOOF_RC_SUCCESS );
-	TEST_ERR_IF( interface.moreToOutput == 1 );
 
 	/* test bad inputWord   normal word */
 	for ( i = 0; i < ( HOOF_MAX_WORD_LENGTH + 1 ); i += 1 )

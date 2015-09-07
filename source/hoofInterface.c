@@ -136,6 +136,7 @@ HOOF_RC hoofDo( Hoof *hoof, HoofInterface *interface )
 	/* DATA */
 	HOOF_RC rc = HOOF_RC_SUCCESS;
 
+	int i = 0;
 	int huh = 0;
 
 
@@ -143,9 +144,11 @@ HOOF_RC hoofDo( Hoof *hoof, HoofInterface *interface )
 	PARANOID_ERR_IF( hoof == NULL );
 	PARANOID_ERR_IF( interface == NULL );
 
-	interface->outputWord[ 0 ] = '\0';
-	interface->moreToOutput = 0;
-	interface->delayAfterSayingOutputWord = 0;
+	while ( i <= HOOF_MAX_VALUE_LENGTH )
+	{
+		interface->outputValue[ i ][ 0 ] = '\0';
+		i += 1;
+	}
 
 	ERR_PASSTHROUGH( hoofWordVerify( interface->inputWord ) );
 
@@ -212,7 +215,8 @@ const char *hoofRCToString( int rc )
 		"Error Filename Too Long",
 		"Error File Contains Bad Content",
 		"Error Word Contains Bad Characters",
-		"Error Word Too Long"
+		"Error Word Too Long",
+		"Error Value Too Long"
 	};
 
 	static const char *rcUnknown = "Unknown Error";

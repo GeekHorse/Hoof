@@ -11,13 +11,6 @@ change from ascii to hoof-encoding
 37-62 reserved
 63 space
 
-max words per value is 30
-
-output doesnt do 'more to output' but can directly output up to 31 words
-	this is enough for "ok" and then a maximum 30 words of a value
-
-no more 'delay' 
-
 words need a type
 	text
 	number
@@ -25,8 +18,6 @@ words need a type
 	binary
 
 the hoofDo function where we pass in a word, we can also pass in callbacks the 'server' can use to draw or play sounds
-
-
 
 change example client to be
 	hoof open file

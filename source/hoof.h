@@ -67,15 +67,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HOOF_RC_ERROR_FILE_BAD                   304
 #define HOOF_RC_ERROR_WORD_BAD                   305
 #define HOOF_RC_ERROR_WORD_LONG                  306
+#define HOOF_RC_ERROR_VALUE_LONG                 307
 
 /* These must be kept in sync with the above defines */
 #define HOOF_RC_HOOF_ERRORS_MIN                  301
-#define HOOF_RC_HOOF_ERRORS_MAX                  306
+#define HOOF_RC_HOOF_ERRORS_MAX                  307
 
 /******************************************************************************/
+/* TODO: rename these: hoof_word_length_max hoof_value_length_max */
 #define HOOF_MAX_WORD_LENGTH  31
 /* TODO: probably need to change the maximum word length to 32 */
 /* TODO: need max words per value, probably 32 too */
+#define HOOF_MAX_VALUE_LENGTH 30
+/* TODO: or change both of these to 30 */
 
 /******************************************************************************/
 typedef struct HoofSTRUCT Hoof;
@@ -86,9 +90,7 @@ typedef struct
 	/* TODO: instead of having just 1 outputWord, have it be able to output the max + 1
 	the max so we can output the entire value, and +1 so we can prefix it with a word like
 	"error" or something */
-	char outputWord[ HOOF_MAX_WORD_LENGTH + 1 ];
-	int moreToOutput; /* TODO then these two could go away */
-	int delayAfterSayingOutputWord;
+	char outputValue[ HOOF_MAX_VALUE_LENGTH + 1 ][ HOOF_MAX_WORD_LENGTH + 1 ];
 } HoofInterface;
 
 /* TODO: init needs to take an optional 'draw' function

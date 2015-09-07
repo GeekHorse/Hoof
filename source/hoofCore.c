@@ -50,10 +50,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	\param[out] outputWord The destination location.
 	\return void
 */
-HOOF_INTERNAL void hoofOutput( const char *whatToOutput, char *outputWord )
+HOOF_INTERNAL void hoofOutput( const char *whatToOutput, HoofInterface *interface )
 {
 	int i = 0;
+	char *outputWord = NULL;
+	while ( i <= HOOF_MAX_VALUE_LENGTH && interface->outputValue[ i ][ 0 ] != '\0' )
+	{
+		i += 1;
+	}
+	PARANOID_ERR_IF( i == HOOF_MAX_VALUE_LENGTH && interface->outputValue[ HOOF_MAX_VALUE_LENGTH ][ 0 ] != '\0' );
+
+	outputWord = interface->outputValue[ i ];
 	outputWord[ 0 ] = '\0';
+	i = 0;
 	while ( whatToOutput[ i ] != '\0' )
 	{
 		outputWord[ i ] = whatToOutput[ i ];
@@ -341,6 +350,9 @@ HOOF_INTERNAL HOOF_RC hoofWordInsert( Hoof *hoof, char *value )
 	/* DATA */
 	HOOF_RC rc = HOOF_RC_SUCCESS;
 
+	int i = 0;
+
+	HoofWord *word = NULL;
 	HoofWord *newWord = NULL;
 	char *newValue = NULL;
 
@@ -348,6 +360,18 @@ HOOF_INTERNAL HOOF_RC hoofWordInsert( Hoof *hoof, char *value )
 	/* CODE */
 	PARANOID_ERR_IF( value[ 0 ] == '\0' );
 
+	/* make sure value isn't too long */
+	i = 0;
+	word = hoof->currentValue->wordHead->right;
+	while ( word->value != NULL )
+	{
+		i += 1;
+		word = word->right;
+	}
+
+	ERR_IF( i == HOOF_MAX_VALUE_LENGTH, HOOF_RC_ERROR_VALUE_LONG );
+
+	/* insert */
 	HOOF_CALLOC( newWord, HoofWord, 1 );
 
 	ERR_PASSTHROUGH( hoofStrdup( value, &newValue ) );
