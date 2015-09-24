@@ -7,8 +7,8 @@ set -e
 
 ./cleanup
 (cd ./source && gcc -O3 -I . -c hoof.c -o hoof.o)
-(cd ./example_client && gcc -O3 -I ../source/ -c example_client.c -o example_client.o)
-(cd ./example_client && gcc -O3 example_client.o ../source/hoof.o -o ../hoof)
+(cd ./example_client_1 && gcc -O3 -I ../source/ -c example_client_1.c -o example_client_1.o)
+(cd ./example_client_1 && gcc -O3 example_client_1.o ../source/hoof.o -o ../hoof)
 
 strip -s ./hoof
 

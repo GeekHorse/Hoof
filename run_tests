@@ -49,13 +49,13 @@ if [ $1 = "fast" ] || [ $1 = "valgrind" ] || [ $1 = "paranoid" ]; then
 		fi
 	fi
 
-	(cd ./example_client && gcc -O3 -Dhoof_debug -I ../source -c example_client.c -o example_client.o)
+	(cd ./example_client_1 && gcc -O3 -Dhoof_debug -I ../source -c example_client_1.c -o example_client_1.o)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO COMPILE EXAMPLE CLIENT"
 		exit -1
 	fi
 
-	(cd ./example_client && gcc -O3 example_client.o ../source/hoof.o -o ../hoof)
+	(cd ./example_client_1 && gcc -O3 example_client_1.o ../source/hoof.o -o ../hoof)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO LINK EXAMPLE CLIENT"
 		exit -1
@@ -79,13 +79,13 @@ elif [ $1 = "coverage" ]; then
 		exit -1
 	fi
 
-	(cd ./example_client && gcc -g -Dhoof_debug -I ../source -c example_client.c -o example_client.o)
+	(cd ./example_client_1 && gcc -g -Dhoof_debug -I ../source -c example_client_1.c -o example_client_1.o)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO COMPILE EXAMPLE CLIENT"
 		exit -1
 	fi
 
-	(cd ./example_client && gcc -fprofile-arcs example_client.o ../source/hoof.o -o ../hoof)
+	(cd ./example_client_1 && gcc -fprofile-arcs example_client_1.o ../source/hoof.o -o ../hoof)
 	if [ $? -ne 0 ]; then
 		echo "FAILED TO LINK EXAMPLE CLIENT"
 		exit -1

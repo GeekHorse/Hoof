@@ -2,7 +2,7 @@
 
 rm -f ./source/*.o
 rm -f ./source/*.a
-rm -f ./example_client/*.o
+rm -f ./example_client_1/*.o
 rm -f hoof
 rm -f ./tests/misc/misc.o
 rm -f ./tests/misc/misc
