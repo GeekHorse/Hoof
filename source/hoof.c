@@ -117,9 +117,6 @@
 		n loading ;
 		n paused ;
 		n literal ;
-		n max_columns ;
-		n max_rows ;
-		void ( * draw_function )( n column , n row , b * text ) ;
 		n ( * state )( struct hoof * hoof , struct hoof_interface * interface , n * huh ) ;
 		struct hoof_value * root ;
 		struct hoof_value * current_value ;
@@ -128,7 +125,6 @@
 // static function prototypes
 	static n hoof_words_are_same( b * word_1 , b * word_2 ) ;
 	// states
-		static n hoof_state_hello( struct hoof * hoof , struct hoof_interface * interface , n * huh ) ;
 		static n hoof_state_navigate( struct hoof * hoof , struct hoof_interface * interface , n * huh ) ;
 		static n hoof_state_most_choice( struct hoof * hoof , struct hoof_interface * interface , n * huh ) ;
 		static n hoof_state_new_choice( struct hoof * hoof , struct hoof_interface *interface , n * huh ) ;
@@ -143,8 +139,7 @@
 		static n hoof_save( struct hoof  *hoof ) ;
 	// drawing
 		static n hoof_word_length( b * word ) ;
-		static void hoof_draw_value( hoof_draw_function draw_function , struct hoof_value * value , n max_columns , n row , n * row_size ) ;
-		static void hoof_draw( struct hoof * hoof ) ;
+		static void hoof_draw_value( struct hoof * hoof , hoof_draw_function draw_function , struct hoof_value * value , n max_columns , n row , n * row_size , struct hoof_interface * hoof_interface ) ;
 	static void hoof_output( const b * what_to_output, struct hoof_interface *interface ) ;
 	static n hoof_word_verify( b *word ) ;
 	static n hoof_strdup( b *word_in, b **word_out_A ) ;
@@ -177,19 +172,6 @@
 		return 1 ;
 		}
 	// states
-		static n hoof_state_hello( struct hoof *hoof, struct hoof_interface *interface, n *huh )
-			{
-			/* DATA */
-			n rc = hoof_rc_success;
-
-
-			/* CODE */
-			(void)huh;
-			say( (b *) "hello" );
-			hoof->state = hoof_state_navigate;
-
-			return rc;
-			}
 		static n hoof_state_navigate( struct hoof *hoof, struct hoof_interface *interface, n *huh )
 			{
 			/* DATA */
@@ -548,7 +530,7 @@
 			{
 				hoof->literal = 1;
 			}
-			else if ( hear( "done" ) )
+			else if ( hear( "done" ) || hear( "D" ) )
 			{
 				if ( hoof->current_word->left->value != null )
 				{
@@ -557,6 +539,31 @@
 
 				hoof->state = hoof_state_navigate;
 				say( "ok" );
+			}
+			// TODO test this
+			// TODO, this is lame, need to modify hoof_word_delete to take a word to delete, then we can get rid of the post 2 ifs that try to fixup the current word
+			else if ( hear( "B") )
+				{
+				if ( hoof->current_word->left->value != null )
+					{
+					// TODO: change all this to just hoof_word_delete(hoof->current_word->left);
+					hoof->current_word = hoof->current_word->left;
+					hoof_word_delete(hoof);
+					if (hoof->current_word->left == NULL)
+						{
+						hoof->current_word = hoof->current_word->right;
+						}
+					else if (hoof->current_word->right->value == NULL)
+						{
+						hoof->current_word = hoof->current_word->right;
+						}
+					}
+				}
+			// TODO test this
+			else if ( hear( "\n" ) )
+			{
+				err_passthrough( hoof_value_insert( hoof->current_value ) );
+				hoof_make_current_value( hoof, hoof->current_value->down );
 			}
 			else
 			{
@@ -971,7 +978,7 @@
 			hoof_root( hoof );
 
 			hoof->loading = 0;
-			hoof->state = hoof_state_hello;
+			hoof->state = hoof_state_navigate; // TODO, get rid of hello state, and hello from tests
 
 
 			/* CLEANUP */
@@ -1209,35 +1216,95 @@
 				}
 			return length ;
 			}
-		static void hoof_draw_value( hoof_draw_function draw_function , struct hoof_value * value , n max_columns , n row , n * row_size )
+		// TODO this function now takes hoof, so it doesnt need draw_function or max_columns passed in 
+		static void hoof_draw_value( struct hoof * hoof , hoof_draw_function draw_function , struct hoof_value * value , n max_columns , n row , n * row_size , struct hoof_interface * hoof_interface )
 			{
 			// data
 			n column = 0 ;
 			struct hoof_word * word = NULL ;
 			n word_length = 0 ;
+			b * bullet = NULL ;
 			// code
 			( * row_size ) = 1 ;
 			word = value -> word_head -> right ;
 			// draw bullet
-			if ( draw_function != NULL )
+			// dont want to draw on row 1 because we draw information there
+			if ( draw_function != NULL && row > 1 )
 				{
-				draw_function( 0 , row , ( b * ) "* " ) ;
+				if ( value -> in != NULL )
+					{
+					bullet = ( b * ) "> " ;
+					}
+				else
+					{
+					bullet = ( b * ) "* " ;
+					}
+				if ( hoof -> current_value == value )
+					{
+					// TODO make a define for what a bullet is
+					// TODO also will need a define for what a "end of page bullet" is
+					draw_function( hoof_draw_current , 1 , row , bullet ) ;
+					}
+				else
+					{
+					draw_function( hoof_draw_normal , 1 , row , bullet ) ;
+					}
 				}
 			// foreach word
-			while ( word -> value != NULL )
+			column = 3 ;
+			while ( 1 )
 				{
-				word_length = hoof_word_length( word -> value ) ;
-				// do we have enough room on the current line ?
-				if ( column != 2 && ( column + word_length ) >= max_columns )
+				// if we're in the new state and we're drawing the current word, then we need to draw an extra space where the new words will be inserted
+				if ( hoof -> state == hoof_state_new && hoof -> current_word == word )
 					{
-					column = 2 ;
+					// TODO make this a function?
+					word_length = hoof_word_length( hoof_interface -> input_word ) ;
+					// do we have enough room on the current line ?
+					if ( column != 3 && ( column + word_length + 1 ) >= max_columns )
+						{
+						column = 3 ;
+						row += 1 ;
+						( * row_size ) += 1 ;
+						}
+					if ( draw_function != NULL && row > 1 )
+						{
+						draw_function( hoof_draw_cursor , column , row , hoof_interface -> input_word ) ;
+						}
+					column += word_length + 1 ;
+					column += 1 ;
+					}
+				// if we're at end of line, we're done
+				if ( word -> value == NULL )
+					{
+					break;
+					}
+				word_length = hoof_word_length( word -> value ) ;
+				// TODO think about this, maybe a function for "is punctuation?"
+				if ( word->value[0] == ',' || word->value[0] == '.' || word->value[0] == '?' || word->value[0] == '!' )
+					{
+					if ( column > 3 )
+						{
+						column -= 1;
+						}
+					}
+				// do we have enough room on the current line ?
+				if ( column != 3 && ( column + word_length ) >= max_columns )
+					{
+					column = 3 ;
 					row += 1 ;
 					( * row_size ) += 1 ;
 					}
 				// draw word
-				if ( draw_function != NULL )
+				if ( draw_function != NULL && row > 1 )
 					{
-					draw_function( column , row , word -> value ) ;
+					if ( hoof -> state != hoof_state_new && hoof -> current_word == word )
+						{
+						draw_function( hoof_draw_current , column , row , word -> value ) ;
+						}
+					else
+						{
+						draw_function( hoof_draw_normal , column , row , word -> value ) ;
+						}
 					}
 				// update column
 				column += word_length ;
@@ -1246,43 +1313,55 @@
 				word = word -> right ;
 				}
 			}
-		static void hoof_draw( struct hoof * hoof )
+		// TODO this function needs to draw things differently if we're in insert or dig mode
+		// TODO in insert mode it needs to add an extra space where we're inserting and make the background green
+		// TODO in dig mode it needs to somehow highlight all the words that have matched so far
+		// TODO also we need to figure out how to draw when we're at the TAIL line that we're eventually going to be able to have as current line
+		// TODO move this into non-static section
+		void hoof_draw( struct hoof * hoof , n max_columns , n max_rows , hoof_draw_function draw_function , struct hoof_interface * hoof_interface )
 			{
 			// data
-			hoof_draw_function draw_function = NULL ;
 			n row = 0 ;
 			n row_size = 0 ;
 			struct hoof_value * value = NULL ;
 			// code
+			// draw title line
+			if ( draw_function != NULL && hoof -> current_value -> out != NULL )
+				{
+				draw_function( hoof_draw_normal , 1 , 1 , ( b * ) "<" ) ;
+				}
+			// TODO factor out the rest of this function,
+			// call with current_value, 0, y, width / 2, height
+			// then, if we have an in, call with current_value->in, width / 2, y, width / 2, height
 			// draw current value
 			value = hoof -> current_value ;
-			row = ( hoof -> max_rows ) / 2 ;
-			hoof_draw_value( draw_function , value , hoof -> max_columns , row , & row_size ) ;
+			row = max_rows / 2 ;
+			hoof_draw_value( hoof , draw_function , value , max_columns , row , & row_size , hoof_interface ) ;
 			// draw down values until we run out of space or run out of values
 			while ( 1 )
 				{
 				row += row_size ;
 				value = value -> down ;
-				if ( row >= ( hoof -> max_rows ) || value -> word_head -> value == NULL )
+				if ( row > max_rows || value -> word_head == NULL )
 					{
 					break ;
 					}
-				hoof_draw_value( draw_function , value , hoof -> max_columns , row , & row_size ) ;
+				hoof_draw_value( hoof , draw_function , value , max_columns , row , & row_size , hoof_interface ) ;
 				}
 			// draw up values until we run out of space or run out of values
 			value = hoof -> current_value ;
-			row = ( hoof -> max_rows ) / 2 ;
+			row = max_rows / 2 ;
 			while ( 1 )
 				{
 				value = value -> up ;
-				if ( value -> word_head -> value == NULL )
+				if ( value -> word_head == NULL )
 					{
 					break ;
 					}
-				hoof_draw_value( NULL , value , hoof -> max_columns , row , & row_size ) ;
+				hoof_draw_value( hoof, NULL , value , max_columns , row , & row_size , hoof_interface ) ;
 				row -= row_size ;
-				hoof_draw_value( draw_function , value , hoof -> max_columns , row , & row_size ) ;
-				if ( row < 0 )
+				hoof_draw_value( hoof , draw_function , value , max_columns , row , & row_size , hoof_interface ) ;
+				if ( row <= 1 )
 					{
 					break ;
 					}
@@ -1319,13 +1398,30 @@
 
 
 		/* CODE */
-		/* if normal word that contains letters */
-		if ( word[ 0 ] >= 'a' && word[ 0 ] <= 'z' )
+		// TODO test special characters
+		if ( word[ 0 ] == 'B' || word[ 0 ] == 'D' )
+			{
+			err_if( word[ 1 ] != '\0', hoof_rc_error_word_bad ) ;
+			}
+		// TODO test punctuation
+		else if
+			(
+			   word[ 0 ] == ','
+			|| word[ 0 ] == '.'
+			|| word[ 0 ] == '?'
+			|| word[ 0 ] == '!'
+			)
 		{
-			/* make sure word doesn't contain any whitespace, is only characters, and is not too long */
+			err_if( word[ 1 ] != '\0', hoof_rc_error_word_bad ) ;
+		}
+		// TODO test apostrophes
+		/* if normal word that contains letters and apostrophes */
+		else if ( word[ 0 ] >= 'a' && word[ 0 ] <= 'z' )
+		{
+			/* make sure word doesn't contain any whitespace, is only letters or apostrophes, and is not too long */
 			for ( i = 0; word[ i ] != '\0'; i += 1 )
 			{
-				err_if( ! ( word[ i ] >= 'a' && word[ i ] <= 'z' ), hoof_rc_error_word_bad );
+				err_if( ! ( ( word[ i ] >= 'a' && word[ i ] <= 'z' ) || word[ i ] == '\'' ), hoof_rc_error_word_bad );
 				err_if( i >= hoof_max_word_length, hoof_rc_error_word_long );
 			}
 		}
@@ -1521,6 +1617,8 @@
 
 
 		/* CODE */
+		// TODO verify word is ok here too
+
 		paranoid_err_if( value[ 0 ] == '\0' );
 
 		/* make sure value isn't too long */
@@ -2054,13 +2152,6 @@
 
 		return;
 		}
-	n hoof_set_draw_function( struct hoof * hoof , n max_columns , n max_rows , hoof_draw_function draw_function )
-		{
-		hoof -> max_columns = max_columns ;
-		hoof -> max_rows = max_rows ;
-		hoof -> draw_function = draw_function ;
-		return hoof_rc_success ;
-		}
 	n hoof_do( struct hoof *hoof, struct hoof_interface *interface )
 		{
 		/* DATA */
@@ -2080,7 +2171,15 @@
 			i += 1;
 		}
 
-		err_passthrough( hoof_word_verify( interface->input_word ) );
+		// TODO figure out a better way to do this
+		if ( interface->input_word[0] == '\n' && interface->input_word[1] == '\0' && hoof->state == hoof_state_new )
+			{
+			// this is fine
+			}
+		else
+			{
+			err_passthrough( hoof_word_verify( interface->input_word ) );
+			}
 
 		/* handle pause and resume */
 		if ( hoof->paused )
@@ -2113,9 +2212,6 @@
 		}
 
 		interface->input_word[ 0 ] = '\0';
-
-		// TODO
-		(void)hoof_draw;
 
 		/* CLEANUP */
 		cleanup:

@@ -242,19 +242,16 @@
 							break ;
 							}
 						// else character
-						else
+						else if ( input_word_index < hoof_max_word_length )
 							{
-							if ( input_word_index < hoof_max_word_length )
-								{
-								interface . input_word[ input_word_index ] = ch[ 0 ] ;
-								input_word_index += 1 ;
-								interface.input_word[ input_word_index ] = '\0' ;
+							interface . input_word[ input_word_index ] = ch[ 0 ] ;
+							input_word_index += 1 ;
+							interface.input_word[ input_word_index ] = '\0' ;
 
-								if ( interactive )
-									{
-									printf( "%c" , ch[ 0 ] ) ;
-									fflush( stdout ) ;
-									}
+							if ( interactive )
+								{
+								printf( "%c" , ch[ 0 ] ) ;
+								fflush( stdout ) ;
 								}
 							}
 						}

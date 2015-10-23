@@ -55,6 +55,9 @@
 		// TODO: need max words per value, probably 32 too
 		#define hoof_max_value_length 30
 		// TODO: or change both of these to 30
+		#define hoof_draw_normal 0
+		#define hoof_draw_current 1
+		#define hoof_draw_cursor 2
 	// types
 		struct hoof ;
 		struct hoof_interface
@@ -62,11 +65,11 @@
 			b input_word [ hoof_max_word_length + 1 ] ;
 			b output_value [ hoof_max_value_length + 1 ] [ hoof_max_word_length + 1 ] ;
 			} ;
-		typedef void ( * hoof_draw_function )( n column , n row , b * text ) ;
+		typedef void ( * hoof_draw_function )( n draw_mode , n column , n row , b * text ) ;
 	// public functions
 		n hoof_init( b * filename , struct hoof * * hoof_a ) ;
 		void hoof_free( struct hoof * * hoof_f ) ;
-		n hoof_set_draw_function( struct hoof * hoof , n max_columns , n max_rows , hoof_draw_function draw_function ) ;
+		void hoof_draw( struct hoof * hoof , n max_columns , n max_rows , hoof_draw_function draw_function , struct hoof_interface * hoof_interface ) ;
 		n hoof_do( struct hoof * hoof , struct hoof_interface * hoof_interface ) ;
 		const b * hoof_rc_to_string( n rc ) ;
 	#endif
