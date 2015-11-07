@@ -28,7 +28,7 @@
 		{
 		window_size_changed = 1 ;
 		}
-	n key_available()
+	n key_available( void )
 		{
 		struct timeval timeout ;
 		fd_set rdset ;
@@ -50,7 +50,14 @@
 			}
 		return 0 ;
 		}
-	void draw( n draw_mode , n column , n row , b * text )
+	void get_window_size( void )
+		{
+		struct winsize winsize ;
+		ioctl( 0 , TIOCGWINSZ , & winsize ) ;
+		window_width = winsize . ws_col ;
+		window_height = winsize . ws_row ;
+		}
+	void draw_callback( n draw_mode , n column , n row , b * text )
 		{
 		if ( row <= 0 )
 			{
@@ -84,6 +91,17 @@
 			printf( "\x1b[0m" );
 			}
 		}
+	void draw_everything( struct hoof * hoof, struct hoof_interface * interface , b * history )
+		{
+		// clear screen
+		printf("\x1b[2J");
+		// draw hoof state
+		hoof_draw( hoof, window_width , window_height - 1 , draw_callback , interface ) ;
+		// draw history
+		draw_callback( hoof_draw_normal , window_width - history_size, window_height , history ) ;
+		// flush
+		fflush( stdout ) ;
+		}
 	void history_add_character( b * history , b character )
 		{
 		n i = 0 ;
@@ -114,21 +132,19 @@
 		history[ 0 ] = ' ' ;
 		}
 // main
-	int main( int argc, char * * argv )
+	int main( int argc, b * * argv )
 		{
 		// data
 		n rc = 0 ;
 		struct hoof * hoof = NULL ;
 		struct hoof_interface interface ;
-		// TODO: can we change char to b ?
-		char * filename = "" ;
+		b * filename = "" ;
 		n done = 0 ;
 		struct termios old_tio , new_tio ;
-		struct winsize winsize ;
 		n read_num = 0 ;
-		char ch[ 3 ] = { 0 , 0 , 0 } ;
+		b ch[ 3 ] = { 0 , 0 , 0 } ;
 		// TODO think about this
-		char punctuation = 0 ;
+		b punctuation = 0 ;
 		n i = 0 ;
 		b history[ history_size + 1 ] = { 0 } ;
 		n input_word_index = 0 ;
@@ -141,7 +157,6 @@
 			}
 			history[ history_size ] = '\0' ;
 
-		// TODO need more comments
 		interface . input_word[ 0 ] = '\0' ;
 
 		if ( argc >= 2 )
@@ -169,14 +184,9 @@
 			goto cleanup ;
 			}
 		// get window size
-		ioctl( 0 , TIOCGWINSZ , & winsize ) ;
-		window_width = winsize . ws_col ;
-		window_height = winsize . ws_row ;
+		get_window_size( );
 		// draw
-		printf("\x1b[2J");
-		hoof_draw( hoof, window_width , window_height - 1 , draw , & interface ) ;
-		draw( hoof_draw_normal , window_width - history_size, window_height , history ) ;
-		fflush( stdout ) ;
+		draw_everything( hoof , & interface , history );
 		// main loop
 		while ( ! done )
 			{
@@ -185,22 +195,13 @@
 				// did window size change?
 				if ( window_size_changed )
 					{
-					// TODO we do this more than one place, make it a function
-					// get window size
-					ioctl( 0 , TIOCGWINSZ , & winsize ) ;
-					window_width = winsize . ws_col ;
-					window_height = winsize . ws_row ;
-					// draw
-					printf("\x1b[2J");
-					hoof_draw( hoof , window_width , window_height - 1 , draw , & interface ) ;
-					draw( hoof_draw_normal , window_width - history_size, window_height , history ) ;
-					fflush( stdout ) ;
-					// reset
+					get_window_size( );
+					draw_everything( hoof , & interface , history );
 					window_size_changed = 0 ;
 					}
-				// handle automatic next key punctuation thing TODO
+				// handle automatic next key punctuation thing
 				if ( punctuation != 0 )
-				{
+					{
 					if ( punctuation == '\n' || punctuation == '\r' )
 						{
 						history_add_character( history , ' ' ) ;
@@ -213,7 +214,7 @@
 					interface . input_word[ 1 ] = '\0';
 					punctuation = 0;
 					break;
-				}
+					}
 				// wait a little bit for a key press
 				if ( key_available( ) )
 					{
@@ -237,7 +238,8 @@
 							history_add_character( history , ' ' ) ;
 							break ;
 							}
-						// else if punctuation (call hoof function?)
+						// TODO: puncutation, commands
+						// else if punctuation (TODO call hoof function?)
 						else if ( ch[ 0 ] == ',' || ch[ 0 ] == '.' || ch[ 0 ] == '?' || ch[ 0 ] == '!' || ch[ 0 ] == 'D' || ch[ 0 ] == 'B' || ch[ 0 ] == '\r' || ch[ 0 ] == '\n' )
 							{
 							punctuation = ch[ 0 ];
@@ -255,6 +257,7 @@
 					// only allowed to use arrow keys when youre not in the middle of typing an input word
 					else if ( read_num == 3 && interface . input_word[ 0 ] == '\0' )
 						{
+						// TODO: change this to special characters
 						// up
 						if ( ch[ 0 ] == 27 && ch[ 1 ] == '[' && ch[ 2 ] == 'A' )
 							{
@@ -306,11 +309,7 @@
 							break ;
 							}
 						}
-					// draw history
-					printf("\x1b[2J");
-					hoof_draw( hoof, window_width , window_height - 1 , draw , & interface ) ;
-					draw( hoof_draw_normal , window_width - history_size, window_height , history ) ;
-					fflush( stdout ) ;
+					draw_everything( hoof , & interface , history );
 					} // end if key available
 				} // end while
 			// give input to hoof
@@ -326,7 +325,6 @@
 				}
 			// add hoof output to history
 			// add space to separate input from output
-			// TODO history_add_character( history , " " ) ;
 			if ( interface . output_value[ 0 ][ 0 ] != '\0' )
 				{
 				// add space to separate input from output
@@ -345,10 +343,7 @@
 			input_word_index = 0 ;
 			interface . input_word[ 0 ] = '\0' ;
 			// draw
-			printf("\x1b[2J");
-			hoof_draw( hoof, window_width , window_height - 1 , draw , & interface ) ;
-			draw( hoof_draw_normal , window_width - history_size, window_height , history ) ;
-			fflush( stdout ) ;
+			draw_everything( hoof , & interface , history );
 			} // end main loop
 		// make sure we print a newline so the prompt is good
 		printf( "\n" ) ;

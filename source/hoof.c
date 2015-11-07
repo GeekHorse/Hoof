@@ -87,12 +87,10 @@
 		pages have a value head and value tail, both with word_head = null
 		pages can not be empty, they must contain at least 1 real value
 			the head value, a real value, and the tail value
-			TODO: this will change, pages should be able to be empty, and the current value can be the head or tail value
 		values have a word head and word tail, both with value = null
 		values can be empty
 			empty value is only word head and word tail
 		current_value will never be a value head or value tail
-			TODO: this will change
 		current_word may be a value head or a real word
 		root is the value head of the root page
 		*/
@@ -153,8 +151,8 @@
 	static n hoof_value_insert( struct hoof_value *before ) ;
 	static n hoof_page_init( struct hoof_value *parent, n create_empty_value, struct hoof_value **page_A ) ;
 	static void hoof_value_clear( struct hoof *hoof, struct hoof_value *value ) ;
-	static void hoof_word_delete( struct hoof *hoof ) ;
-	static void hoof_value_delete( struct hoof *hoof ) ;
+	static void hoof_word_delete( struct hoof *hoof, struct hoof_word *word_to_delete ) ;
+	static void hoof_value_delete( struct hoof *hoof, struct hoof_interface *interface ) ;
 	static void hoof_page_delete( struct hoof *hoof, struct hoof_value **page_F ) ;
 	static void hoof_dig( struct hoof *hoof, b *word ) ;
 // functions
@@ -541,22 +539,11 @@
 				say( "ok" );
 			}
 			// TODO test this
-			// TODO, this is lame, need to modify hoof_word_delete to take a word to delete, then we can get rid of the post 2 ifs that try to fixup the current word
 			else if ( hear( "B") )
 				{
 				if ( hoof->current_word->left->value != null )
 					{
-					// TODO: change all this to just hoof_word_delete(hoof->current_word->left);
-					hoof->current_word = hoof->current_word->left;
-					hoof_word_delete(hoof);
-					if (hoof->current_word->left == NULL)
-						{
-						hoof->current_word = hoof->current_word->right;
-						}
-					else if (hoof->current_word->right->value == NULL)
-						{
-						hoof->current_word = hoof->current_word->right;
-						}
+					hoof_word_delete( hoof, hoof->current_word->left );
 					}
 				}
 			// TODO test this
@@ -590,17 +577,19 @@
 			}
 			else if ( hear( "word" ) )
 			{
-				hoof_word_delete( hoof );
+				hoof_word_delete( hoof, hoof->current_word );
 
 				hoof->state = hoof_state_navigate;
 				say( "ok" );
 			}
 			else if ( hear( "value" ) )
 			{
-				hoof_value_delete( hoof );
+				// say ok first because hoof_value_delete says which direction it went after it deleted the value
+				say( "ok" );
+
+				hoof_value_delete( hoof, interface );
 
 				hoof->state = hoof_state_navigate;
-				say( "ok" );
 			}
 			else
 			{
@@ -978,7 +967,7 @@
 			hoof_root( hoof );
 
 			hoof->loading = 0;
-			hoof->state = hoof_state_navigate; // TODO, get rid of hello state, and hello from tests
+			hoof->state = hoof_state_navigate;
 
 
 			/* CLEANUP */
@@ -1216,7 +1205,6 @@
 				}
 			return length ;
 			}
-		// TODO this function now takes hoof, so it doesnt need draw_function or max_columns passed in 
 		static void hoof_draw_value( struct hoof * hoof , hoof_draw_function draw_function , struct hoof_value * value , n max_columns , n row , n * row_size , struct hoof_interface * hoof_interface )
 			{
 			// data
@@ -1242,7 +1230,6 @@
 				if ( hoof -> current_value == value )
 					{
 					// TODO make a define for what a bullet is
-					// TODO also will need a define for what a "end of page bullet" is
 					draw_function( hoof_draw_current , 1 , row , bullet ) ;
 					}
 				else
@@ -1250,17 +1237,16 @@
 					draw_function( hoof_draw_normal , 1 , row , bullet ) ;
 					}
 				}
-			// foreach word
+			// draw words
 			column = 3 ;
 			while ( 1 )
 				{
-				// if we're in the new state and we're drawing the current word, then we need to draw an extra space where the new words will be inserted
+				// if we're in the new state and we're drawing the current word, then we need to draw the current input_word and an extra space where the new words will be inserted
 				if ( hoof -> state == hoof_state_new && hoof -> current_word == word )
 					{
-					// TODO make this a function?
 					word_length = hoof_word_length( hoof_interface -> input_word ) ;
 					// do we have enough room on the current line ?
-					if ( column != 3 && ( column + word_length + 1 ) >= max_columns )
+					if ( column != 3 && ( column + word_length ) > max_columns )
 						{
 						column = 3 ;
 						row += 1 ;
@@ -1270,8 +1256,8 @@
 						{
 						draw_function( hoof_draw_cursor , column , row , hoof_interface -> input_word ) ;
 						}
-					column += word_length + 1 ;
-					column += 1 ;
+					column += word_length ;
+					column += 2 ;
 					}
 				// if we're at end of line, we're done
 				if ( word -> value == NULL )
@@ -1288,7 +1274,8 @@
 						}
 					}
 				// do we have enough room on the current line ?
-				if ( column != 3 && ( column + word_length ) >= max_columns )
+				// TODO: remove the "-1" if you want to always leave 1 column on the far right empty for a cursor
+				if ( column != 3 && ( column + word_length - 1 ) > max_columns )
 					{
 					column = 3 ;
 					row += 1 ;
@@ -1313,10 +1300,6 @@
 				word = word -> right ;
 				}
 			}
-		// TODO this function needs to draw things differently if we're in insert or dig mode
-		// TODO in insert mode it needs to add an extra space where we're inserting and make the background green
-		// TODO in dig mode it needs to somehow highlight all the words that have matched so far
-		// TODO also we need to figure out how to draw when we're at the TAIL line that we're eventually going to be able to have as current line
 		// TODO move this into non-static section
 		void hoof_draw( struct hoof * hoof , n max_columns , n max_rows , hoof_draw_function draw_function , struct hoof_interface * hoof_interface )
 			{
@@ -1330,9 +1313,6 @@
 				{
 				draw_function( hoof_draw_normal , 1 , 1 , ( b * ) "<" ) ;
 				}
-			// TODO factor out the rest of this function,
-			// call with current_value, 0, y, width / 2, height
-			// then, if we have an in, call with current_value->in, width / 2, y, width / 2, height
 			// draw current value
 			value = hoof -> current_value ;
 			row = max_rows / 2 ;
@@ -1414,9 +1394,8 @@
 		{
 			err_if( word[ 1 ] != '\0', hoof_rc_error_word_bad ) ;
 		}
-		// TODO test apostrophes
 		/* if normal word that contains letters and apostrophes */
-		else if ( word[ 0 ] >= 'a' && word[ 0 ] <= 'z' )
+		else if ( ( word[ 0 ] >= 'a' && word[ 0 ] <= 'z' ) || word[ 0 ] == '\'' )
 		{
 			/* make sure word doesn't contain any whitespace, is only letters or apostrophes, and is not too long */
 			for ( i = 0; word[ i ] != '\0'; i += 1 )
@@ -1785,32 +1764,32 @@
 
 		return;
 		}
-	static void hoof_word_delete( struct hoof *hoof )
+	static void hoof_word_delete( struct hoof *hoof, struct hoof_word *word_to_delete )
 		{
-		struct hoof_word *word_to_delete = null;
-
-		if ( hoof->current_word->value != null )
-		{
-			hoof->current_word->left->right = hoof->current_word->right;
-			hoof->current_word->right->left = hoof->current_word->left;
-
-			word_to_delete = hoof->current_word;
-			if ( hoof->current_word->right->value != null )
+		if ( word_to_delete->value != null )
 			{
-				hoof->current_word = hoof->current_word->right;
-			}
-			else
-			{
-				hoof->current_word = hoof->current_word->left;
-			}
+			word_to_delete->left->right = word_to_delete->right;
+			word_to_delete->right->left = word_to_delete->left;
+
+			if ( hoof->current_word == word_to_delete )
+				{
+				if ( hoof->current_word->right->value != null )
+					{
+					hoof->current_word = hoof->current_word->right;
+					}
+				else
+					{
+					hoof->current_word = hoof->current_word->left;
+					}
+				}
 
 			hoof_memory_free( word_to_delete->value );
 			hoof_memory_free( word_to_delete );
-		}
+			}
 
 		return;
 		}
-	static void hoof_value_delete( struct hoof *hoof )
+	static void hoof_value_delete( struct hoof *hoof, struct hoof_interface *interface )
 		{
 		/* DATA */
 		struct hoof_value *value = null;
@@ -1831,6 +1810,8 @@
 				hoof_page_delete( hoof, &(hoof->current_value->in) );
 			}
 			hoof_value_clear( hoof, hoof->current_value );
+
+			say( "root" );
 
 			return;
 		}
@@ -1875,7 +1856,17 @@
 				hoof_memory_free( value->in->down ); /* value tail */
 				hoof_memory_free( value->in );       /* value head */
 				value->in = null;
+
+				say( "out" );
 			}
+			else
+			{
+				say( "up" );
+			}
+		}
+		else
+		{
+			say( "down" );
 		}
 
 		hoof_make_current_value( hoof, value );
@@ -2121,12 +2112,9 @@
 		/* CLEANUP */
 		cleanup:
 
-		/* TODO: call hoof_free? */
 		if ( new_hoof != null )
 		{
-			hoof_memory_free( new_hoof->filename );
-			hoof_page_delete( new_hoof, &(new_hoof->root) );
-			hoof_memory_free( new_hoof );
+			hoof_free( &new_hoof );
 		}
 		hoof_memory_free( new_filename );
 
